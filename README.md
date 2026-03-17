@@ -11,11 +11,11 @@
 │       └── style.css            # 全局样式
 └── tools/
     ├── presentation-lottery/    # 述职抽签工具箱
-    │   ├── index.html
-    │   └── tool-style.css
-    └── image-stitching/         # 图片拼接工具
-        ├── index.html
-        └── tool-style.css
+    │   └── index.html
+    ├── image-stitching/         # 图片拼接工具
+    │   └── index.html
+    └── fullscreen-countdown/    # 全屏倒计时
+        └── index.html
 ```
 
 ## 页面路径
@@ -23,6 +23,7 @@
 - **主页**: `https://你的用户名.github.io/仓库名/`
 - **述职抽签**: `https://你的用户名.github.io/仓库名/tools/presentation-lottery/`
 - **图片拼接**: `https://你的用户名.github.io/仓库名/tools/image-stitching/`
+- **全屏倒计时**: `https://你的用户名.github.io/仓库名/tools/fullscreen-countdown/`
 
 ## 集成现有工具
 
