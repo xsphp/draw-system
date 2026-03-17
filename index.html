@@ -348,16 +348,15 @@
                     <p>人员姓名 人员姓名 人员姓名</p>
                     <p style="margin-top: 10px;"><strong>📋 示例：</strong></p>
                     <p><code>【安全环保中心:1】</code></p>
-                    <p>李武 苏昌丽 廖贵生</p>
+                    <p>张三 李四 王五 赵六</p>
                     <p><code>【包装中心:2】</code></p>
-                    <p>佘雁铬 许祥玲</p>
+                    <p>张三 李四 王五 赵六</p>
                 </div>
 
                 <textarea class="config-textarea" id="configInput" placeholder="【安全环保中心:1】
-李武 苏昌丽 廖贵生
-
+张三 李四 王五 赵六
 【包装中心:2】
-佘雁铬 许祥玲"></textarea>
+张三 李四 王五 赵六"></textarea>
 
                 <div>
                     <button class="btn btn-success" onclick="saveConfig()">💾 保存配置</button>
@@ -439,11 +438,9 @@
 
         function loadExample() {
             const example = `【安全环保中心:1】
-李武 苏昌丽 廖贵生
-
+张三 李四 王五 赵六
 【包装中心:2】
-佘雁铬 许祥玲
-
+张三 李四 王五 赵六
 【生产中心:1】
 张三 李四 王五 赵六`;
             document.getElementById('configInput').value = example;
