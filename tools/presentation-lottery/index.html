@@ -308,6 +308,40 @@
             text-decoration: underline;
         }
 
+        /* 配置说明开关 - 左上角小黑按钮 */
+        .config-help-toggle {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1002;
+        }
+
+        .config-help-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #1a1a1a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .config-help-btn:hover {
+            background: #333;
+            transform: scale(1.1);
+        }
+
+        .config-help-btn.active {
+            background: #667eea;
+        }
+
         /* 返回按钮 */
         .back-home {
             position: fixed;
@@ -337,6 +371,11 @@
     </style>
 </head>
 <body>
+    <!-- 配置说明开关 - 左上角 -->
+    <div class="config-help-toggle">
+        <button class="config-help-btn" id="configHelpBtn" onclick="toggleConfigHelp()" title="查看配置说明">?</button>
+    </div>
+
     <div class="back-home">
         <a href="../../index.html">← 返回工具箱</a>
     </div>
@@ -372,9 +411,9 @@
             </button>
 
             <div id="configSection">
-                <div class="config-hint">
+                <div class="config-hint" id="configHint">
                     <p><strong>📝 配置格式：</strong></p>
-                    <p><code>【中心名称：1】</code></p>
+                    <p><code>【中心名称：抽取次数】</code></p>
                     <p>人员姓名 人员姓名 人员姓名</p>
                     <p style="margin-top: 10px;"><strong>📋 示例：</strong></p>
                     <p><code>【安全环保中心:1】</code></p>
@@ -448,12 +487,28 @@
 
         // ==================== 初始化 ====================
         window.addEventListener('DOMContentLoaded', function() {
+            // 默认隐藏配置说明
+            document.getElementById('configHint').style.display = 'none';
             loadConfig();
             loadRecords();
             updateStats();
         });
 
         // ==================== 配置管理 ====================
+        function toggleConfigHelp() {
+            const hint = document.getElementById('configHint');
+            const btn = document.getElementById('configHelpBtn');
+            if (hint.style.display === 'none') {
+                hint.style.display = 'block';
+                btn.classList.add('active');
+                btn.textContent = '×';
+            } else {
+                hint.style.display = 'none';
+                btn.classList.remove('active');
+                btn.textContent = '?';
+            }
+        }
+
         function toggleConfig() {
             const section = document.getElementById('configSection');
             const text = document.getElementById('toggleText');
@@ -520,7 +575,7 @@
             let currentCenter = null;
             
             for (let line of lines) {
-                // 检查是否是中心行 【中心名：1】
+                // 检查是否是中心行 【中心名：次数】
                 const centerMatch = line.match(/【(.+?):(\d+)】/);
                 
                 if (centerMatch) {
@@ -738,7 +793,7 @@
             const remaining = countMembers(appData.centers) - appData.drawnMembers.length;
             
             if (totalQuota === 0) {
-                showToast('请先设置抽取1', 'warning');
+                showToast('请先设置抽取次数', 'warning');
                 return;
             }
 
