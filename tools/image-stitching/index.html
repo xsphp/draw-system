@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片拼接压缩工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        /* 上传区域 */
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #e9ecef;
+            transform: scale(1.02);
+        }
+
+        .upload-area.dragover {
+            border-color: #11998e;
+            background: #d4edda;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* 图片列表 */
+        .image-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .image-item {
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: move;
+        }
+
+        .image-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .image-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-info {
+            padding: 10px;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .image-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(235, 51, 73, 0.9);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s;
+        }
+
+        .image-remove:hover {
+            background: #eb3349;
+            transform: scale(1.1);
+        }
+
+        .image-index {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* 控制区域 */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .control-group input[type="number"] {
+            width: 100px;
+            padding: 8px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .control-group select {
+            padding: 8px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 1em;
+            background: white;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(235, 51, 73, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 预览区域 */
+        .preview-area {
+            text-align: center;
+        }
+
+        .preview-container {
+            max-height: 600px;
+            overflow: auto;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .preview-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .info-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-top: 5px;
+        }
+
+        .info-value.success {
+            color: #11998e;
+        }
+
+        .info-value.warning {
+            color: #f5576c;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+        }
+
+        /* 提示框 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #333;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .toast.error { background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); }
+        .toast.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .toast.info { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+
+        /* 返回按钮 */
+        .back-home {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1001;
+        }
+
+        .back-home a {
+            display: inline-block;
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.95);
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+        }
+
+        .back-home a:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Tab 切换 */
+        .tab-bar {
+            display: flex;
+            gap: 0;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-btn {
+            padding: 12px 30px;
+            border: none;
+            background: #f0f2ff;
+            color: #667eea;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px 10px 0 0;
+            transition: all 0.2s;
+            margin-right: 4px;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #dde1ff;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* 9宫格特有控制项 */
+        .grid-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        /* 9宫格预览缩略图 */
+        .grid-preview-thumb {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            margin-top: 20px;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 12px;
+            background: #f8f9fa;
+        }
+
+        .grid-thumb-cell {
+            position: relative;
+            aspect-ratio: 1;
+            background: #e9ecef;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #aaa;
+            font-size: 0.85em;
+        }
+
+        .grid-thumb-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .grid-thumb-cell .cell-index {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background: rgba(102,126,234,0.85);
+            color: white;
+            font-size: 0.75em;
+            font-weight: bold;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-thumb-cell .cell-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(235,51,73,0.85);
+            color: white;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .grid-thumb-cell.empty-slot {
+            border: 2px dashed #ccc;
+            cursor: default;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .grid-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="back-home">
+        <a href="../../index.html">← 返回工具箱</a>
+    </div>
+    <div class="container">
+        <h1>🖼️ 图片拼接压缩工具</h1>
+
+        <!-- 主功能卡片 -->
+        <div class="card">
+            <!-- Tab 切换 -->
+            <div class="tab-bar">
+                <button class="tab-btn active" id="tab-vertical" onclick="switchTab('vertical')">📋 竖向拼接</button>
+                <button class="tab-btn" id="tab-grid" onclick="switchTab('grid')">⬛ 宫格拼接（每排3张）</button>
+            </div>
+
+            <!-- ========== 竖向拼接面板 ========== -->
+            <div class="tab-panel active" id="panel-vertical">
+                <h2>📤 上传图片</h2>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">点击或拖拽上传图片</div>
+                    <div class="upload-hint">支持 JPG、PNG、GIF、WebP 格式，可多选</div>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" multiple>
+
+                <div class="image-list" id="imageList"></div>
+
+                <div class="controls" id="controls" style="display: none;">
+                    <div class="control-group">
+                        <label>目标大小:</label>
+                        <input type="number" id="targetSize" value="2" min="0.1" max="10" step="0.1">
+                        <span>MB</span>
+                    </div>
+                    <div class="control-group">
+                        <label>输出格式:</label>
+                        <select id="outputFormat">
+                            <option value="image/jpeg">JPEG</option>
+                            <option value="image/png">PNG</option>
+                            <option value="image/webp">WebP</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>图片间距:</label>
+                        <input type="number" id="imageGap" value="0" min="0" max="100" step="1">
+                        <span>px</span>
+                    </div>
+                    <div class="control-group">
+                        <label>背景颜色:</label>
+                        <input type="color" id="bgColor" value="#ffffff" style="width: 50px; height: 35px; border: none; cursor: pointer;">
+                    </div>
+                    <button class="btn btn-primary" onclick="mergeImages()">🔗 开始拼接</button>
+                    <button class="btn btn-warning" onclick="clearAll()">🗑️ 清空全部</button>
+                </div>
+            </div>
+
+            <!-- ========== 宫格拼接面板 ========== -->
+            <div class="tab-panel" id="panel-grid">
+                <h2>📤 上传图片（每排自动排3张，可无限行）</h2>
+
+                <div class="upload-area" id="gridUploadArea">
+                    <div class="upload-icon">🔲</div>
+                    <div class="upload-text">点击或拖拽上传图片</div>
+                    <div class="upload-hint">支持多选，图片将按顺序每排3张排列</div>
+                </div>
+                <input type="file" id="gridFileInput" accept="image/*" multiple>
+
+                <!-- 宫格缩略图预览 -->
+                <div class="grid-preview-thumb" id="gridThumb" style="display:none;"></div>
+
+                <!-- 宫格控制项 -->
+                <div class="grid-controls" id="gridControls" style="display: none;">
+                    <div class="control-group">
+                        <label>单格尺寸:</label>
+                        <input type="number" id="gridCellSize" value="400" min="100" max="1200" step="50">
+                        <span>px（正方形）</span>
+                    </div>
+                    <div class="control-group">
+                        <label>格间距:</label>
+                        <input type="number" id="gridGap" value="6" min="0" max="60" step="2">
+                        <span>px</span>
+                    </div>
+                    <div class="control-group">
+                        <label>背景颜色:</label>
+                        <input type="color" id="gridBgColor" value="#ffffff" style="width: 50px; height: 35px; border: none; cursor: pointer;">
+                    </div>
+                    <div class="control-group">
+                        <label>输出格式:</label>
+                        <select id="gridOutputFormat">
+                            <option value="image/jpeg">JPEG</option>
+                            <option value="image/png">PNG</option>
+                            <option value="image/webp">WebP</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>目标大小:</label>
+                        <input type="number" id="gridTargetSize" value="5" min="0.1" max="50" step="0.5">
+                        <span>MB</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="mergeGrid()">⬛ 生成宫格图</button>
+                    <button class="btn btn-warning" onclick="clearGrid()">🗑️ 清空全部</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 进度条（共用） -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%;">0%</div>
+            </div>
+            <div class="progress-text" id="progressText">正在处理...</div>
+        </div>
+
+        <!-- 预览区域（共用） -->
+        <div class="card preview-area" id="previewArea" style="display: none;">
+            <h2>👁️ 预览效果</h2>
+            <div class="preview-container">
+                <img id="previewImage" alt="预览图">
+            </div>
+            <div class="preview-info">
+                <div class="info-item">
+                    <div class="info-label">原始大小</div>
+                    <div class="info-value" id="originalSize">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">压缩后大小</div>
+                    <div class="info-value success" id="compressedSize">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">压缩率</div>
+                    <div class="info-value" id="compressionRate">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">图片尺寸</div>
+                    <div class="info-value" id="imageDimensions">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">图片数量</div>
+                    <div class="info-value" id="imageCount">-</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-success" id="downloadBtn" onclick="downloadImage()">📥 下载图片</button>
+                <button class="btn btn-primary" id="reMergeBtn" onclick="reMerge()">🔄 重新生成</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全局变量 ====================
+        let uploadedImages = [];       // 竖向拼接图片列表
+        let gridImages = [];           // 宫格拼接图片列表
+        let mergedImageBlob = null;
+        let mergedImageUrl = null;
+        let currentTab = 'vertical';   // 当前 tab
+
+        // ==================== Tab 切换 ====================
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.getElementById('panel-' + tab).classList.add('active');
+            // 切换 tab 时隐藏上次的预览
+            document.getElementById('previewArea').style.display = 'none';
+        }
+
+        function reMerge() {
+            if (currentTab === 'vertical') mergeImages();
+            else mergeGrid();
+        }
+
+        // ==================== 竖向拼接事件绑定 ====================
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => { handleFiles(e.target.files); fileInput.value = ''; });
+
+        // ==================== 宫格拼接事件绑定 ====================
+        const gridUploadArea = document.getElementById('gridUploadArea');
+        const gridFileInput = document.getElementById('gridFileInput');
+
+        gridUploadArea.addEventListener('click', () => gridFileInput.click());
+        gridUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); gridUploadArea.classList.add('dragover'); });
+        gridUploadArea.addEventListener('dragleave', () => gridUploadArea.classList.remove('dragover'));
+        gridUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            gridUploadArea.classList.remove('dragover');
+            handleGridFiles(e.dataTransfer.files);
+        });
+        gridFileInput.addEventListener('change', (e) => { handleGridFiles(e.target.files); gridFileInput.value = ''; });
+
+        // ==================== 竖向：文件处理 ====================
+        function handleFiles(files) {
+            const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            if (imageFiles.length === 0) { showToast('请选择图片文件', 'warning'); return; }
+            imageFiles.forEach(f => loadImage(f));
+            showToast(`已添加 ${imageFiles.length} 张图片`, 'success');
+        }
+
+        function loadImage(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    uploadedImages.push({ file, url: e.target.result, width: img.width, height: img.height, name: file.name, size: file.size });
+                    renderImageList();
+                    document.getElementById('controls').style.display = 'flex';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderImageList() {
+            const container = document.getElementById('imageList');
+            if (uploadedImages.length === 0) {
+                container.innerHTML = '';
+                document.getElementById('controls').style.display = 'none';
+                return;
+            }
+            container.innerHTML = uploadedImages.map((img, index) => `
+                <div class="image-item" data-index="${index}">
+                    <div class="image-index">${index + 1}</div>
+                    <img src="${img.url}" alt="${img.name}">
+                    <div class="image-info">
+                        <div style="font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${img.name}</div>
+                        <div>${formatSize(img.size)} • ${img.width}x${img.height}</div>
+                    </div>
+                    <button class="image-remove" onclick="removeImage(${index})">×</button>
+                </div>
+            `).join('');
+            enableDragSort();
+        }
+
+        function removeImage(index) {
+            uploadedImages.splice(index, 1);
+            renderImageList();
+            if (uploadedImages.length === 0) {
+                document.getElementById('controls').style.display = 'none';
+                document.getElementById('previewArea').style.display = 'none';
+            }
+        }
+
+        function clearAll() {
+            if (!confirm('确定要清空所有图片吗？')) return;
+            uploadedImages = [];
+            renderImageList();
+            document.getElementById('previewArea').style.display = 'none';
+            mergedImageBlob = null;
+            if (mergedImageUrl) { URL.revokeObjectURL(mergedImageUrl); mergedImageUrl = null; }
+            showToast('已清空所有图片', 'info');
+        }
+
+        // ==================== 竖向：拖拽排序 ====================
+        function enableDragSort() {
+            const items = document.querySelectorAll('.image-item');
+            items.forEach(item => {
+                item.setAttribute('draggable', true);
+                item.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', item.dataset.index); item.style.opacity = '0.5'; });
+                item.addEventListener('dragend', () => { item.style.opacity = '1'; });
+                item.addEventListener('dragover', (e) => e.preventDefault());
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const from = parseInt(e.dataTransfer.getData('text/plain'));
+                    const to = parseInt(item.dataset.index);
+                    if (from !== to) {
+                        const temp = uploadedImages[from];
+                        uploadedImages.splice(from, 1);
+                        uploadedImages.splice(to, 0, temp);
+                        renderImageList();
+                    }
+                });
+            });
+        }
+
+        // ==================== 竖向：图片拼接 ====================
+        async function mergeImages() {
+            if (uploadedImages.length === 0) { showToast('请先上传图片', 'warning'); return; }
+            showProgress(0, '正在加载图片...');
+            document.getElementById('progressContainer').style.display = 'block';
+            try {
+                const gap = parseInt(document.getElementById('imageGap').value) || 0;
+                const bgColor = document.getElementById('bgColor').value;
+                let totalHeight = 0, maxWidth = 0;
+                uploadedImages.forEach(img => { totalHeight += img.height; if (img.width > maxWidth) maxWidth = img.width; });
+                if (uploadedImages.length > 1) totalHeight += gap * (uploadedImages.length - 1);
+                showProgress(20, '正在创建画布...');
+                const canvas = document.createElement('canvas');
+                canvas.width = maxWidth;
+                canvas.height = totalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                showProgress(40, '正在拼接图片...');
+                let currentY = 0;
+                for (let i = 0; i < uploadedImages.length; i++) {
+                    const img = uploadedImages[i];
+                    const el = new Image();
+                    await new Promise(r => { el.onload = r; el.src = img.url; });
+                    ctx.drawImage(el, (maxWidth - img.width) / 2, currentY);
+                    currentY += img.height + gap;
+                }
+                showProgress(70, '正在压缩...');
+                const format = document.getElementById('outputFormat').value;
+                const targetSize = (parseFloat(document.getElementById('targetSize').value) || 2) * 1024 * 1024;
+                const result = await compressImage(canvas, format, targetSize);
+                mergedImageBlob = result.blob;
+                if (mergedImageUrl) URL.revokeObjectURL(mergedImageUrl);
+                mergedImageUrl = URL.createObjectURL(result.blob);
+                showProgress(100, '处理完成！');
+                setTimeout(() => { document.getElementById('progressContainer').style.display = 'none'; }, 1000);
+                showPreview(result.blob, canvas.width, canvas.height);
+            } catch (err) {
+                showToast('处理失败：' + err.message, 'error');
+                document.getElementById('progressContainer').style.display = 'none';
+            }
+        }
+
+        // ==================== 宫格：文件处理 ====================
+        function handleGridFiles(files) {
+            const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            if (imageFiles.length === 0) { showToast('请选择图片文件', 'warning'); return; }
+            let loaded = 0;
+            imageFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        gridImages.push({ file, url: e.target.result, width: img.width, height: img.height, name: file.name, size: file.size });
+                        loaded++;
+                        if (loaded === imageFiles.length) {
+                            renderGridThumb();
+                            document.getElementById('gridControls').style.display = 'flex';
+                            document.getElementById('gridThumb').style.display = 'grid';
+                            showToast(`已添加 ${imageFiles.length} 张图片`, 'success');
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderGridThumb() {
+            const container = document.getElementById('gridThumb');
+            if (gridImages.length === 0) {
+                container.innerHTML = '';
+                container.style.display = 'none';
+                document.getElementById('gridControls').style.display = 'none';
+                return;
+            }
+            // 计算行数，最后一行不足3张时补空格
+            const cols = 3;
+            const totalCells = Math.ceil(gridImages.length / cols) * cols;
+            let html = '';
+            for (let i = 0; i < totalCells; i++) {
+                if (i < gridImages.length) {
+                    const img = gridImages[i];
+                    html += `
+                        <div class="grid-thumb-cell">
+                            <img src="${img.url}" alt="${img.name}">
+                            <div class="cell-index">${i + 1}</div>
+                            <button class="cell-remove" onclick="removeGridImage(${i})">×</button>
+                        </div>`;
+                } else {
+                    html += `<div class="grid-thumb-cell empty-slot">空</div>`;
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        function removeGridImage(index) {
+            gridImages.splice(index, 1);
+            renderGridThumb();
+            if (gridImages.length === 0) {
+                document.getElementById('previewArea').style.display = 'none';
+            }
+        }
+
+        function clearGrid() {
+            if (!confirm('确定要清空所有图片吗？')) return;
+            gridImages = [];
+            renderGridThumb();
+            document.getElementById('previewArea').style.display = 'none';
+            mergedImageBlob = null;
+            if (mergedImageUrl) { URL.revokeObjectURL(mergedImageUrl); mergedImageUrl = null; }
+            showToast('已清空所有图片', 'info');
+        }
+
+        // ==================== 宫格：生成图片 ====================
+        async function mergeGrid() {
+            if (gridImages.length === 0) { showToast('请先上传图片', 'warning'); return; }
+
+            showProgress(0, '正在准备...');
+            document.getElementById('progressContainer').style.display = 'block';
+
+            try {
+                const cols = 3;
+                const cellSize = parseInt(document.getElementById('gridCellSize').value) || 400;
+                const gap = parseInt(document.getElementById('gridGap').value) || 6;
+                const bgColor = document.getElementById('gridBgColor').value;
+
+                const rows = Math.ceil(gridImages.length / cols);
+                // 最后一行不足3张时，实际列数仍按3计算（保持宽度一致）
+                const canvasW = cols * cellSize + (cols - 1) * gap;
+                const canvasH = rows * cellSize + (rows - 1) * gap;
+
+                showProgress(20, '正在创建画布...');
+                const canvas = document.createElement('canvas');
+                canvas.width = canvasW;
+                canvas.height = canvasH;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, canvasW, canvasH);
+
+                showProgress(40, '正在绘制图片...');
+
+                for (let i = 0; i < gridImages.length; i++) {
+                    const img = gridImages[i];
+                    const col = i % cols;
+                    const row = Math.floor(i / cols);
+                    const x = col * (cellSize + gap);
+                    const y = row * (cellSize + gap);
+
+                    const el = new Image();
+                    await new Promise(r => { el.onload = r; el.src = img.url; });
+
+                    // 居中裁剪填满单元格（cover 效果）
+                    const srcAspect = img.width / img.height;
+                    let sx = 0, sy = 0, sw = img.width, sh = img.height;
+                    if (srcAspect > 1) {
+                        // 图片更宽，裁两侧
+                        sw = img.height;
+                        sx = (img.width - sw) / 2;
+                    } else {
+                        // 图片更高，裁上下
+                        sh = img.width;
+                        sy = (img.height - sh) / 2;
+                    }
+                    ctx.drawImage(el, sx, sy, sw, sh, x, y, cellSize, cellSize);
+
+                    const pct = Math.round(40 + ((i + 1) / gridImages.length) * 30);
+                    showProgress(pct, `正在绘制 ${i + 1} / ${gridImages.length}...`);
+                }
+
+                showProgress(72, '正在压缩...');
+                const format = document.getElementById('gridOutputFormat').value;
+                const targetSize = (parseFloat(document.getElementById('gridTargetSize').value) || 5) * 1024 * 1024;
+                const result = await compressImage(canvas, format, targetSize);
+
+                mergedImageBlob = result.blob;
+                if (mergedImageUrl) URL.revokeObjectURL(mergedImageUrl);
+                mergedImageUrl = URL.createObjectURL(result.blob);
+
+                showProgress(100, '处理完成！');
+                setTimeout(() => { document.getElementById('progressContainer').style.display = 'none'; }, 1000);
+
+                showPreview(result.blob, canvasW, canvasH);
+
+            } catch (err) {
+                showToast('处理失败：' + err.message, 'error');
+                document.getElementById('progressContainer').style.display = 'none';
+            }
+        }
+
+        // ==================== 智能压缩 ====================
+        async function compressImage(canvas, format, targetSize) {
+            let quality = 0.95;
+            let blob = await canvasToBlob(canvas, format, quality);
+            let iterations = 0;
+            const maxIter = 20;
+            while (blob.size > targetSize && quality > 0.1 && iterations < maxIter) {
+                quality = Math.max(0.1, quality - 0.05);
+                blob = await canvasToBlob(canvas, format, quality);
+                iterations++;
+                showProgress(Math.round(70 + (iterations / maxIter) * 25), `压缩中... 质量 ${Math.round(quality * 100)}%`);
+            }
+            if (blob.size > targetSize) {
+                let scale = 0.9;
+                let scaledCanvas = canvas;
+                while (blob.size > targetSize && scale > 0.3 && iterations < maxIter * 2) {
+                    scaledCanvas = document.createElement('canvas');
+                    scaledCanvas.width = Math.floor(canvas.width * scale);
+                    scaledCanvas.height = Math.floor(canvas.height * scale);
+                    scaledCanvas.getContext('2d').drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+                    blob = await canvasToBlob(scaledCanvas, format, 0.8);
+                    scale -= 0.1;
+                    iterations++;
+                    showProgress(Math.round(70 + (iterations / (maxIter * 2)) * 25), `缩放中... ${Math.round(scale * 100)}%`);
+                }
+                return { blob, canvas: scaledCanvas };
+            }
+            return { blob, canvas };
+        }
+
+        function canvasToBlob(canvas, format, quality) {
+            return new Promise(r => canvas.toBlob(b => r(b), format, quality));
+        }
+
+        // ==================== 预览 ====================
+        function showPreview(blob, width, height) {
+            const srcList = currentTab === 'vertical' ? uploadedImages : gridImages;
+            const originalSize = srcList.reduce((s, img) => s + img.size, 0);
+            const compressedSize = blob.size;
+            const rate = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+
+            document.getElementById('previewImage').src = mergedImageUrl;
+            document.getElementById('originalSize').textContent = formatSize(originalSize);
+            document.getElementById('compressedSize').textContent = formatSize(compressedSize);
+            document.getElementById('compressionRate').textContent = rate > 0 ? `-${rate}%` : `+${Math.abs(rate)}%`;
+            document.getElementById('imageDimensions').textContent = `${width} x ${height}`;
+            document.getElementById('imageCount').textContent = srcList.length;
+
+            const targetEl = document.getElementById('compressedSize');
+            const targetSizeInput = currentTab === 'vertical'
+                ? document.getElementById('targetSize')
+                : document.getElementById('gridTargetSize');
+            const limit = (parseFloat(targetSizeInput.value) || 2) * 1024 * 1024;
+            targetEl.classList.toggle('warning', compressedSize > limit);
+            targetEl.classList.toggle('success', compressedSize <= limit);
+
+            document.getElementById('previewArea').style.display = 'block';
+            document.getElementById('previewArea').scrollIntoView({ behavior: 'smooth' });
+            showToast('生成完成！', 'success');
+        }
+
+        // ==================== 下载 ====================
+        function downloadImage() {
+            if (!mergedImageBlob) { showToast('请先生成图片', 'warning'); return; }
+            const fmt = currentTab === 'vertical'
+                ? document.getElementById('outputFormat').value
+                : document.getElementById('gridOutputFormat').value;
+            const ext = fmt === 'image/png' ? 'png' : fmt === 'image/webp' ? 'webp' : 'jpg';
+            const prefix = currentTab === 'grid' ? 'grid' : 'merged';
+            const a = document.createElement('a');
+            a.href = mergedImageUrl;
+            a.download = `${prefix}_${Date.now()}.${ext}`;
+            a.click();
+            showToast('下载已开始', 'success');
+        }
+
+        // ==================== 工具函数 ====================
+        function formatSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showProgress(pct, text) {
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressFill').textContent = pct + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+
+        function showToast(msg, type = 'info') {
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
