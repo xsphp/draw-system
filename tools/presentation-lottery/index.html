@@ -374,7 +374,7 @@
             <div id="configSection">
                 <div class="config-hint">
                     <p><strong>📝 配置格式：</strong></p>
-                    <p><code>【中心名称：抽取次数】</code></p>
+                    <p><code>【中心名称：1】</code></p>
                     <p>人员姓名 人员姓名 人员姓名</p>
                     <p style="margin-top: 10px;"><strong>📋 示例：</strong></p>
                     <p><code>【安全环保中心:1】</code></p>
@@ -520,7 +520,7 @@
             let currentCenter = null;
             
             for (let line of lines) {
-                // 检查是否是中心行 【中心名：次数】
+                // 检查是否是中心行 【中心名：1】
                 const centerMatch = line.match(/【(.+?):(\d+)】/);
                 
                 if (centerMatch) {
@@ -738,7 +738,7 @@
             const remaining = countMembers(appData.centers) - appData.drawnMembers.length;
             
             if (totalQuota === 0) {
-                showToast('请先设置抽取次数', 'warning');
+                showToast('请先设置抽取1', 'warning');
                 return;
             }
 
