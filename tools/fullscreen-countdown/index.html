@@ -408,15 +408,23 @@
             document.getElementById('setupButtons').style.display = 'none';
             document.getElementById('countdownButtons').style.display = 'flex';
 
-            // 自动全屏
-            toggleFullscreen();
-
+            // 先更新显示，确保用户看到初始时间
             updateDisplay();
+            
+            // 启动定时器（在切换显示之后立即启动）
             startTimer();
+
+            // 尝试全屏（移动端可能需要用户交互，所以延迟一点）
+            setTimeout(() => {
+                toggleFullscreen();
+            }, 100);
         }
 
         function startTimer() {
             if (timerInterval) clearInterval(timerInterval);
+
+            // 立即更新一次显示，确保移动端不会延迟
+            updateDisplay();
 
             timerInterval = setInterval(() => {
                 if (!isPaused && !isTimeUp) {
@@ -469,10 +477,13 @@
             document.getElementById('timerLabel').textContent = '专注中...';
             document.getElementById('timerText').classList.remove('time-up', 'time-up-text');
 
+            // 先更新显示
             updateDisplay();
             
-            // 重新启动定时器
-            startTimer();
+            // 延迟一点点再启动，确保状态已更新
+            setTimeout(() => {
+                startTimer();
+            }, 50);
         }
 
         function backToSetup() {
