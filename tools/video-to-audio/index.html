@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频转音频 - 许先生的工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* 返回按钮组 */
+        .back-buttons {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1001;
+            display: flex;
+            gap: 10px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.95);
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .back-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        /* 标签页 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #e2e8f0;
+        }
+
+        .tab-btn {
+            padding: 12px 25px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 上传区域 */
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #e9ecef;
+            transform: scale(1.02);
+        }
+
+        .upload-area.dragover {
+            border-color: #11998e;
+            background: #d4edda;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* 文件列表 */
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .file-icon {
+            font-size: 2.5em;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .file-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .status-waiting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-converting {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-done {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .convert-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .convert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .convert-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .download-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.3);
+        }
+
+        /* 链接输入 */
+        .link-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .link-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1em;
+        }
+
+        .link-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .parse-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .parse-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 说明信息 */
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-left: 4px solid #2196f3;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .info-box h3 {
+            color: #1565c0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-box ul {
+            padding-left: 20px;
+            color: #333;
+            line-height: 2;
+        }
+
+        .info-box li {
+            margin-bottom: 8px;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border-left: 4px solid #ff9800;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .warning-box h3 {
+            color: #e65100;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .warning-box p {
+            color: #333;
+            line-height: 1.8;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            margin-top: 15px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* 音频播放器 */
+        .audio-player {
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        audio {
+            width: 100%;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .link-input-group {
+                flex-direction: column;
+            }
+
+            .file-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .file-info {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 返回按钮 -->
+    <div class="back-buttons">
+        <a href="../../index.html" class="back-btn">🏠 工具箱</a>
+    </div>
+
+    <div class="container">
+        <h1>🎵 视频转音频提取</h1>
+
+        <!-- 方式选择 -->
+        <div class="card">
+            <h2>📋 选择转换方式</h2>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('upload')">📁 上传视频</button>
+                <button class="tab-btn" onclick="switchTab('link')">🔗 粘贴链接</button>
+                <button class="tab-btn" onclick="switchTab('douyin')">🎬 抖音解析</button>
+            </div>
+
+            <!-- 上传视频 -->
+            <div class="tab-content active" id="uploadTab">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()" id="uploadArea">
+                    <div class="upload-icon">📹</div>
+                    <div class="upload-text">点击或拖拽上传视频文件</div>
+                    <div class="upload-hint">支持 MP4、MOV、AVI、MKV、WEBM 等格式</div>
+                </div>
+                <input type="file" id="fileInput" accept="video/*" multiple>
+
+                <div class="file-list" id="fileList"></div>
+
+                <div class="info-box">
+                    <h3>ℹ️ 使用说明</h3>
+                    <ul>
+                        <li>支持常见视频格式：MP4、MOV、AVI、MKV、WEBM、FLV</li>
+                        <li>音频输出格式：MP3、WAV、M4A、AAC</li>
+                        <li>转换在浏览器本地完成，不会上传到服务器</li>
+                        <li><strong>首次使用会下载 FFmpeg（约 25MB），请耐心等待</strong></li>
+                        <li>大文件可能需要较长时间，请耐心等待</li>
+                        <li>建议使用 Chrome、Edge 等现代浏览器</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 粘贴链接 -->
+            <div class="tab-content" id="linkTab">
+                <div class="link-input-group">
+                    <input type="text" class="link-input" id="videoLink" placeholder="粘贴视频链接（如 B 站、YouTube 等）">
+                    <button class="parse-btn" onclick="parseLink()">🔍 解析</button>
+                </div>
+
+                <div class="warning-box">
+                    <h3>⚠️ 重要说明</h3>
+                    <p>
+                        由于这是纯静态网站（无后端服务器），无法直接解析网络视频链接。
+                        <br><br>
+                        <strong>建议方案：</strong>
+                        <br>
+                        1. 使用第三方工具下载视频到本地
+                        <br>
+                        2. 切换到「上传视频」标签页
+                        <br>
+                        3. 上传已下载的视频文件进行转换
+                    </p>
+                </div>
+
+                <div class="info-box" style="margin-top: 20px;">
+                    <h3>💡 推荐下载工具</h3>
+                    <ul>
+                        <li><strong>浏览器扩展：</strong>Video DownloadHelper、CocoCut</li>
+                        <li><strong>桌面软件：</strong>Downie、youtube-dl、Louder</li>
+                        <li><strong>在线工具：</strong>搜索「视频下载在线工具」</li>
+                        <li><strong>抖音/快手：</strong>使用官方分享功能复制链接</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 抖音解析 -->
+            <div class="tab-content" id="douyinTab">
+                <div class="link-input-group">
+                    <input type="text" class="link-input" id="douyinLink" placeholder="粘贴抖音分享链接或口令">
+                    <button class="parse-btn" onclick="parseDouyin()">🎬 解析</button>
+                </div>
+
+                <div class="warning-box">
+                    <h3>⚠️ 抖音解析说明</h3>
+                    <p>
+                        抖音视频解析需要调用官方 API，静态网站无法直接实现。
+                        <br><br>
+                        <strong>操作步骤：</strong>
+                        <br>
+                        1. 在抖音 APP 中找到想要的视频
+                        <br>
+                        2. 点击「分享」→「复制链接」
+                        <br>
+                        3. 使用第三方抖音解析工具下载视频
+                        <br>
+                        4. 切换到「上传视频」标签页进行转换
+                    </p>
+                </div>
+
+                <div class="info-box" style="margin-top: 20px;">
+                    <h3>🔧 抖音解析工具推荐</h3>
+                    <ul>
+                        <li>搜索「抖音去水印在线解析」</li>
+                        <li>使用微信小程序「抖音解析」类工具</li>
+                        <li>GitHub 开源项目：TikTokDownload</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 转换设置 -->
+        <div class="card" id="settingsCard" style="display: none;">
+            <h2>⚙️ 转换设置</h2>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
+                <div>
+                    <label style="display: block; margin-bottom: 8px; color: #666;">输出格式</label>
+                    <select id="outputFormat" style="padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1em;">
+                        <option value="mp3">MP3（推荐）</option>
+                        <option value="wav">WAV（无损）</option>
+                        <option value="m4a">M4A（苹果）</option>
+                        <option value="aac">AAC</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 8px; color: #666;">音频质量</label>
+                    <select id="audioQuality" style="padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1em;">
+                        <option value="128">128 kbps（标准）</option>
+                        <option value="192">192 kbps（高质量）</option>
+                        <option value="320">320 kbps（最佳）</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载 FFmpeg.wasm -->
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/ffmpeg.min.js"></script>
+    <script>
+        const { FFmpeg } = FFmpegWASM;
+        let ffmpeg = null;
+
+        // 初始化 FFmpeg
+        async function loadFFmpeg() {
+            if (ffmpeg) return true;
+            
+            try {
+                ffmpeg = new FFmpeg();
+                await ffmpeg.load({
+                    coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/ffmpeg-core.js',
+                });
+                return true;
+            } catch (error) {
+                console.error('FFmpeg 加载失败:', error);
+                showToast('FFmpeg 加载失败，请检查网络连接', 'error');
+                return false;
+            }
+        }
+
+        // ==================== 标签页切换 ====================
+        function switchTab(tabName) {
+            // 更新按钮状态
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 更新内容显示
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+
+            // 显示/隐藏设置
+            const settingsCard = document.getElementById('settingsCard');
+            if (tabName === 'upload') {
+                settingsCard.style.display = 'block';
+            } else {
+                settingsCard.style.display = 'none';
+            }
+        }
+
+        // ==================== 文件上传 ====================
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+
+        let uploadedFiles = [];
+
+        // 拖拽上传
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // 点击上传
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            for (let file of files) {
+                if (file.type.startsWith('video/')) {
+                    uploadedFiles.push({
+                        file: file,
+                        id: Date.now() + Math.random(),
+                        status: 'waiting',
+                        audioUrl: null
+                    });
+                    renderFileList();
+                } else {
+                    showToast('请上传视频文件', 'warning');
+                }
+            }
+        }
+
+        function renderFileList() {
+            if (uploadedFiles.length === 0) {
+                fileList.innerHTML = '';
+                return;
+            }
+
+            fileList.innerHTML = uploadedFiles.map(item => `
+                <div class="file-item" id="file_${item.id}">
+                    <div class="file-icon">🎬</div>
+                    <div class="file-info">
+                        <div class="file-name">${item.file.name}</div>
+                        <div class="file-size">${formatFileSize(item.file.size)}</div>
+                        <div class="progress-container" id="progress_${item.id}">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${item.progress || 0}%"></div>
+                            </div>
+                            <div class="progress-text">${item.progressText || '准备转换...'}</div>
+                        </div>
+                        ${item.audioUrl ? `<audio class="audio-player" controls src="${item.audioUrl}"></audio>` : ''}
+                    </div>
+                    <div>
+                        <span class="file-status status-${item.status}">${getStatusText(item.status)}</span>
+                    </div>
+                    <div>
+                        ${item.status === 'waiting' ? `
+                            <button class="convert-btn" onclick="convertFile(${item.id})">🔄 转换</button>
+                        ` : ''}
+                        ${item.status === 'done' ? `
+                            <button class="download-btn" onclick="downloadAudio(${item.id})">⬇️ 下载</button>
+                        ` : ''}
+                        ${item.status === 'converting' ? `
+                            <button class="convert-btn" disabled>⏳ 转换中...</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'waiting': '等待转换',
+                'converting': '转换中',
+                'done': '已完成',
+                'error': '转换失败'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // ==================== 视频转换（使用 FFmpeg.wasm） ====================
+        async function convertFile(fileId) {
+            const fileItem = uploadedFiles.find(f => f.id === fileId);
+            if (!fileItem) return;
+
+            fileItem.status = 'converting';
+            renderFileList();
+
+            try {
+                const outputFormat = document.getElementById('outputFormat').value;
+                const audioQuality = document.getElementById('audioQuality').value;
+
+                // 显示加载提示
+                showToast('正在加载 FFmpeg（首次使用需要下载约 25MB）...', 'info');
+
+                // 加载 FFmpeg
+                const loaded = await loadFFmpeg();
+                if (!loaded) {
+                    fileItem.status = 'error';
+                    renderFileList();
+                    return;
+                }
+
+                // 执行转换
+                await convertWithFFmpeg(fileItem, outputFormat, audioQuality);
+
+            } catch (error) {
+                console.error('转换失败:', error);
+                fileItem.status = 'error';
+                renderFileList();
+                showToast('转换失败：' + error.message, 'error');
+            }
+        }
+
+        async function convertWithFFmpeg(fileItem, format, quality) {
+            const progressContainer = document.getElementById(`progress_${fileItem.id}`);
+            const progressFill = progressContainer.querySelector('.progress-fill');
+            const progressText = progressContainer.querySelector('.progress-text');
+
+            progressContainer.style.display = 'block';
+
+            const fileName = 'video_' + fileItem.id + fileItem.file.name.substring(fileItem.file.name.lastIndexOf('.'));
+            const outputName = 'output_' + fileItem.id + '.' + format;
+
+            // 写入文件到 FFmpeg 虚拟文件系统
+            await ffmpeg.writeFile(fileName, await fetchFile(fileItem.file));
+
+            // 设置 FFmpeg 日志回调来更新进度
+            ffmpeg.on('log', ({ message }) => {
+                const match = message.match(/time=(\d{2}):(\d{2}):(\d{2})/);
+                if (match) {
+                    const seconds = parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseInt(match[3]);
+                    // 估算进度（假设视频最长 60 分钟）
+                    const progress = Math.min(95, Math.floor((seconds / 100) * 10));
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = `正在提取音频... ${progress}%`;
+                }
+            });
+
+            // 构建 FFmpeg 命令
+            let args = ['-i', fileName];
+            
+            // 根据格式设置参数
+            if (format === 'mp3') {
+                args = args.concat(['-vn', '-acodec', 'libmp3lame', '-b:a', quality + 'k']);
+            } else if (format === 'wav') {
+                args = args.concat(['-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2']);
+            } else if (format === 'm4a') {
+                args = args.concat(['-vn', '-acodec', 'aac', '-b:a', quality + 'k']);
+            } else if (format === 'aac') {
+                args = args.concat(['-vn', '-acodec', 'aac', '-b:a', quality + 'k']);
+            }
+
+            args.push(outputName);
+
+            // 执行转换
+            await ffmpeg.exec(args);
+
+            // 读取输出文件
+            const data = await ffmpeg.readFile(outputName);
+            const blob = new Blob([data.buffer], { type: 'audio/' + format });
+            
+            fileItem.audioUrl = URL.createObjectURL(blob);
+            fileItem.status = 'done';
+            fileItem.progress = 100;
+            fileItem.progressText = '转换完成';
+
+            // 清理临时文件
+            try {
+                await ffmpeg.deleteFile(fileName);
+                await ffmpeg.deleteFile(outputName);
+            } catch (e) {
+                console.log('清理临时文件失败:', e);
+            }
+
+            renderFileList();
+            showToast('转换完成！', 'success');
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 辅助函数：获取文件用于 FFmpeg
+        async function fetchFile(file) {
+            const response = await fetch(file);
+            return await response.arrayBuffer();
+        }
+
+        function downloadAudio(fileId) {
+            const fileItem = uploadedFiles.find(f => f.id === fileId);
+            if (!fileItem || !fileItem.audioUrl) return;
+
+            const outputFormat = document.getElementById('outputFormat').value;
+            const link = document.createElement('a');
+            link.href = fileItem.audioUrl;
+            link.download = fileItem.file.name.replace(/\.[^/.]+$/, '') + '.' + outputFormat;
+            link.click();
+        }
+
+        // ==================== 链接解析（占位） ====================
+        function parseLink() {
+            const link = document.getElementById('videoLink').value.trim();
+            if (!link) {
+                showToast('请输入视频链接', 'warning');
+                return;
+            }
+            showToast('静态网站无法直接解析链接，请下载后上传转换', 'info');
+        }
+
+        function parseDouyin() {
+            const link = document.getElementById('douyinLink').value.trim();
+            if (!link) {
+                showToast('请输入抖音分享链接', 'warning');
+                return;
+            }
+            showToast('请使用第三方工具下载抖音视频后上传转换', 'info');
+        }
+
+        // ==================== 提示框 ====================
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                background: ${type === 'success' ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' : 
+                             type === 'error' ? 'linear-gradient(135deg, #eb3349 0%, #f45c43 100%)' :
+                             type === 'warning' ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' :
+                             'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // 添加动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(400px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
