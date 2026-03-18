@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>沟通汇报练习 - 许先生的工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* 返回按钮组 */
+        .back-buttons {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1001;
+            display: flex;
+            gap: 10px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.95);
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .back-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        /* 场景选择 */
+        .scene-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .scene-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+
+        .scene-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        .scene-card.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .scene-card.selected .scene-icon {
+            filter: brightness(0) invert(1);
+        }
+
+        .scene-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .scene-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .scene-desc {
+            font-size: 0.9em;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+
+        /* 对话区域 */
+        .chat-container {
+            display: none;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .chat-info h3 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .chat-info p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .score-display {
+            text-align: right;
+        }
+
+        .score-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .score-label {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .chat-messages {
+            min-height: 400px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            flex-shrink: 0;
+        }
+
+        .message.boss .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 15px;
+            line-height: 1.6;
+        }
+
+        .message.boss .message-content {
+            background: white;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message-time {
+            font-size: 0.75em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .message.user .message-time {
+            text-align: right;
+        }
+
+        /* 输入区域 */
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: none;
+            min-height: 80px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .send-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 反馈面板 */
+        .feedback-panel {
+            display: none;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .feedback-panel h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 参考模板面板 */
+        .template-panel {
+            display: none;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 2px solid #ff9800;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: box-shadow 0.3s;
+        }
+
+        .template-panel:hover {
+            box-shadow: 0 5px 20px rgba(255, 152, 0, 0.3);
+        }
+
+        .template-panel h3 {
+            color: #e65100;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1em;
+        }
+
+        .template-example {
+            background: white;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .template-label {
+            font-size: 0.85em;
+            color: #999;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .template-text {
+            color: #333;
+            line-height: 1.8;
+            font-size: 0.95em;
+        }
+
+        .template-tips {
+            background: rgba(255, 152, 0, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .template-tips-title {
+            font-size: 0.85em;
+            color: #e65100;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .template-tips ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #555;
+            font-size: 0.9em;
+            line-height: 1.8;
+        }
+
+        .feedback-item {
+            margin-bottom: 15px;
+        }
+
+        .feedback-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .feedback-text {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .rating-stars {
+            color: #ffc107;
+            font-size: 1.5em;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* 隐藏类 */
+        .hidden {
+            display: none;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .message-content {
+                max-width: 85%;
+            }
+
+            .scene-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 返回按钮 -->
+    <div class="back-buttons">
+        <button class="back-btn" onclick="backToScenes()" id="backToScenesBtn" style="display: none;">📋 选择场景</button>
+        <a href="../../index.html" class="back-btn">🏠 工具箱</a>
+    </div>
+
+    <div class="container">
+        <h1>💬 沟通汇报练习</h1>
+
+        <!-- 场景选择 -->
+        <div class="card" id="sceneSelectCard">
+            <h2>📋 选择练习场景</h2>
+            <p style="color: #666; margin-bottom: 20px;">
+                选择一个工作场景，与 AI 模拟的上级进行对话练习，提升沟通与汇报能力
+            </p>
+            <div class="scene-grid" id="sceneGrid">
+                <!-- 场景由 JS 生成 -->
+            </div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn btn-success" onclick="startPractice()" id="startBtn" disabled>🚀 开始练习</button>
+            </div>
+        </div>
+
+        <!-- 对话区域 -->
+        <div class="card chat-container" id="chatContainer">
+            <div class="chat-header">
+                <div class="chat-info">
+                    <h3 id="chatSceneTitle">场景标题</h3>
+                    <p id="chatSceneDesc">场景描述</p>
+                </div>
+                <div class="score-display">
+                    <div class="score-number" id="scoreNumber">0</div>
+                    <div class="score-label">当前得分</div>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- 对话消息 -->
+            </div>
+
+            <div class="chat-input-area">
+                <textarea class="chat-input" id="chatInput" placeholder="请输入你的回复..." rows="3"></textarea>
+                <button class="send-btn" onclick="sendMessage()" id="sendBtn">发送</button>
+            </div>
+
+            <div class="feedback-panel" id="feedbackPanel">
+                <h3>📊 对话反馈</h3>
+                <div class="feedback-item">
+                    <div class="feedback-label">表达方式</div>
+                    <div class="feedback-text" id="feedbackExpression"></div>
+                </div>
+                <div class="feedback-item">
+                    <div class="feedback-label">改进建议</div>
+                    <div class="feedback-text" id="feedbackSuggestion"></div>
+                </div>
+                <div class="feedback-item">
+                    <div class="feedback-label">评分</div>
+                    <div class="rating-stars" id="feedbackStars"></div>
+                </div>
+            </div>
+
+            <div class="template-panel" id="templatePanel">
+                <h3>💡 参考回复模板</h3>
+                <div class="template-example">
+                    <div class="template-label">📝 你可以这样回复：</div>
+                    <div class="template-text" id="templateText"></div>
+                </div>
+                <div class="template-tips">
+                    <div class="template-tips-title">✨ 这个回复好在哪里：</div>
+                    <ul id="templateTips"></ul>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn btn-warning" onclick="endPractice()" id="endBtn">🏁 结束练习</button>
+                <button class="btn btn-secondary" onclick="restartPractice()" id="restartBtn" style="display: none;">🔄 重新开始</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 场景数据 ====================
+        const scenes = [
+            {
+                id: 1,
+                icon: '📊',
+                title: '项目进度汇报',
+                desc: '向领导汇报当前项目的进展情况，包括已完成的工作和下一步计划',
+                role: '部门经理',
+                opening: '你好，听说你负责的项目正在进行中，现在进展怎么样了？',
+                tips: ['清晰说明完成进度', '突出关键成果', '说明遇到的问题和解决方案', '给出明确的下一步计划'],
+                templates: [
+                    {
+                        text: '领导好，目前项目整体进度完成了约 70%。已完成的工作包括：1）核心功能开发完毕，已通过测试；2）用户界面优化完成；3）文档编写完成 80%。遇到的主要问题是第三方接口响应较慢，我们已经增加了缓存机制来优化。下一步计划：本周内完成剩余文档，下周一开始内部测试，预计两周后可以上线。',
+                        tips: ['使用具体数据（70%、80%）', '分点说明已完成工作（1、2、3）', '说明问题及解决方案', '给出明确的时间节点']
+                    },
+                    {
+                        text: '项目按计划推进中，目前三个主要模块已完成两个，进度符合预期。关键成果是上周我们攻克了技术难点，性能提升了 50%。风险点是设计团队人手紧张，可能影响下周的 UI 评审。我建议是否可以临时借调一名设计师支持一周？',
+                        tips: ['对比计划说明进度', '突出关键成果和数据', '提前说明风险', '主动提出建议方案']
+                    }
+                ]
+            },
+            {
+                id: 2,
+                icon: '🆘',
+                title: '请求资源支持',
+                desc: '项目需要额外的人力或预算支持，向领导请示资源',
+                role: '部门总监',
+                opening: '你之前提到的资源需求，我想再详细了解一下具体情况？',
+                tips: ['说明资源需求的具体原因', '量化资源投入的预期收益', '提供多个方案供选择', '说明不增加资源的風險'],
+                templates: [
+                    {
+                        text: '感谢领导关注。目前项目进入关键阶段，我们评估需要增加 2 名开发人员支持 1 个月。原因有两个：1）客户临时增加了两个功能需求；2）原定上线时间提前了两周。投入产出比方面，增加人力后可以保证按时上线，预计带来 50 万的合同收入。如果不增加人手，我们有两个备选方案：A）推迟上线时间 2 周；B）先上线核心功能，次要功能延后。建议优先方案 A，您看如何？',
+                        tips: ['说明具体原因（1、2）', '量化收益（50 万）', '提供多个方案（A/B）', '给出推荐建议']
+                    },
+                    {
+                        text: '我们需要申请 5 万元的额外预算用于服务器扩容。原因是用户增长超出预期，当前服务器负载已达 85%，存在宕机风险。扩容后可以支持 5 倍用户增长，保障双十一活动顺利进行。如果不扩容，活动期间宕机风险约 70%，可能影响约 200 万交易额。',
+                        tips: ['明确申请金额', '用数据说明紧迫性（85%）', '说明投入效果（5 倍）', '量化不投入的风险（70%、200 万）']
+                    }
+                ]
+            },
+            {
+                id: 3,
+                icon: '⚠️',
+                title: '汇报工作失误',
+                desc: '工作中出现了问题或失误，需要向领导汇报并承担责任',
+                role: '直属上级',
+                opening: '我听说项目出了些问题，你来说说具体情况吧。',
+                tips: ['主动承认错误，不推卸责任', '说明问题的具体原因', '提出补救措施', '说明如何避免再次发生'],
+                templates: [
+                    {
+                        text: '领导，这次问题主要责任在我。原因是我没有在上线前做充分的回归测试，导致旧功能出现了兼容性问题。目前已经采取的补救措施：1）已回滚到上一版本，服务恢复正常；2）团队正在修复 bug，预计 2 小时内可以重新上线；3）已安排专人测试验证。为避免再次发生，我会：1）建立上线检查清单；2）增加自动化测试覆盖率；3）重要更新安排双人复核。这次教训很深刻，我会认真反思。',
+                        tips: ['主动承担责任', '说明具体原因', '列出已采取的措施（1、2、3）', '说明预防措施', '表达反思态度']
+                    },
+                    {
+                        text: '抱歉领导，这个失误是我的责任。我在需求评审时没有充分评估技术风险，导致开发周期估算过于乐观。现在已经和客户沟通，争取到了 1 周的缓冲时间。团队正在加班赶工，可以追回部分进度。后续我会建立更严格的需求评估流程，类似情况不会再发生。',
+                        tips: ['主动道歉并承担责任', '说明原因', '说明补救进展', '说明预防措施']
+                    }
+                ]
+            },
+            {
+                id: 4,
+                icon: '🎯',
+                title: '季度工作汇报',
+                desc: '季度末向领导汇报本季度的工作成果和收获',
+                role: '部门经理',
+                opening: '这个季度辛苦了，来聊聊你这季度的工作情况和收获吧。',
+                tips: ['用数据说话，量化成果', '突出对团队/公司的贡献', '说明个人成长和学习', '提出下季度的目标和计划'],
+                templates: [
+                    {
+                        text: '感谢领导关心。本季度我主要负责了三个项目：1）A 项目如期上线，用户满意度 95%，带来 30 万收入；2）B 项目优化了核心流程，效率提升 40%；3）C 项目完成了前期调研和技术验证。个人成长方面，学习了新技术 X，并应用到项目中。下季度计划：1）推进 A 项目的二期开发；2）将 B 项目的优化经验推广到其他产品线；3）培养一名新人。希望能在技术深度和团队贡献上都有更大提升。',
+                        tips: ['分项目说明成果', '用数据量化（95%、30 万、40%）', '说明个人学习', '列出下季度计划（1、2、3）']
+                    },
+                    {
+                        text: '本季度完成了 5 个需求开发，代码质量评分团队第一。主导的技术分享获得同事好评。不足的是在跨部门沟通上还可以更好。下季度目标是：1）负责一个完整模块的架构设计；2）发表一篇技术文章；3）帮助新人快速上手。',
+                        tips: ['量化成果（5 个、第一）', '说明亮点（技术分享）', '坦诚不足', '明确下季度目标']
+                    }
+                ]
+            },
+            {
+                id: 5,
+                icon: '💡',
+                title: '提出改进建议',
+                desc: '发现工作流程或方法有问题，向领导提出改进建议',
+                role: '部门主管',
+                opening: '你说有个想法想跟我聊聊？说说看是什么。',
+                tips: ['说明现状和存在的问题', '提出具体的改进方案', '说明预期效果和收益', '考虑实施的可行性'],
+                templates: [
+                    {
+                        text: '领导，我发现目前的周报流程比较耗时，每人平均需要 2 小时整理。我建议引入自动化工具，从系统直接生成数据报表。实施成本：需要 3 天开发时间。预期效果：1）每人每周节省 1.5 小时；2）数据准确性提升；3）管理层可以实时查看。团队 10 人算，每周节省 15 小时，一年就是 780 小时。我已经做了技术验证，可行性很高。您看是否可以尝试？',
+                        tips: ['说明现状问题（2 小时）', '提出具体方案', '量化效果（1.5 小时、780 小时）', '说明已验证可行性', '征求领导意见']
+                    },
+                    {
+                        text: '我建议优化代码评审流程。目前的问题是评审周期长（平均 3 天），且问题发现率低。建议：1）建立评审检查清单；2）小批量多次评审；3）引入自动化代码扫描。预期可以将评审周期缩短到 1 天，问题发现率提升 50%。可以先在一个小组试点，效果好再推广。',
+                        tips: ['说明现状问题（3 天）', '列出具体方案（1、2、3）', '量化预期效果', '建议试点验证']
+                    }
+                ]
+            },
+            {
+                id: 6,
+                icon: '🤝',
+                title: '跨部门协调',
+                desc: '需要与其他部门协作，向领导汇报协调进展和需要支持的地方',
+                role: '项目负责人',
+                opening: '跨部门协作的事情进展如何？有什么需要我帮忙协调的吗？',
+                tips: ['说明协作的目标和进展', '指出遇到的障碍', '明确需要的支持', '提出具体的协调建议'],
+                templates: [
+                    {
+                        text: '目前和设计部门的协作整体顺利，已完成 80% 的设计稿。遇到的障碍是：1）他们临时插入了优先级更高的项目；2）我们这边需求有两次变更。需要您支持的是：1）帮忙确认设计资源的优先级；2）协调下周一次三方会议，对齐最终交付时间。建议会议时间定在下周二或周三，您看哪个时间方便？',
+                        tips: ['说明进展（80%）', '说明障碍（1、2）', '明确需要的支持（1、2）', '提出具体建议（时间）']
+                    },
+                    {
+                        text: '和市场部的协作遇到一些挑战。主要问题是双方对需求理解不一致，导致方案反复修改。建议由您牵头开一个 kickoff 会议，明确项目目标和各自职责。我已经准备了需求文档初稿，会前可以发给大家预览。',
+                        tips: ['说明问题本质', '提出解决建议', '说明已做准备']
+                    }
+                ]
+            }
+        ];
+
+        // ==================== 状态管理 ====================
+        let selectedScene = null;
+        let conversation = [];
+        let score = 0;
+        let turnCount = 0;
+        let isPracticeEnded = false;
+
+        // ==================== 初始化 ====================
+        window.addEventListener('DOMContentLoaded', function() {
+            renderScenes();
+        });
+
+        // ==================== 场景选择 ====================
+        function renderScenes() {
+            const grid = document.getElementById('sceneGrid');
+            grid.innerHTML = scenes.map(scene => `
+                <div class="scene-card" onclick="selectScene(${scene.id})" id="scene${scene.id}">
+                    <div class="scene-icon">${scene.icon}</div>
+                    <div class="scene-title">${scene.title}</div>
+                    <div class="scene-desc">${scene.desc}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectScene(id) {
+            // 清除之前的选择
+            document.querySelectorAll('.scene-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // 选择新场景
+            selectedScene = scenes.find(s => s.id === id);
+            document.getElementById(`scene${id}`).classList.add('selected');
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        function startPractice() {
+            if (!selectedScene) return;
+
+            // 切换显示
+            document.getElementById('sceneSelectCard').style.display = 'none';
+            document.getElementById('chatContainer').style.display = 'block';
+            document.getElementById('backToScenesBtn').style.display = 'block';
+
+            // 设置场景信息
+            document.getElementById('chatSceneTitle').textContent = `${selectedScene.icon} ${selectedScene.title}`;
+            document.getElementById('chatSceneDesc').textContent = `模拟对象：${selectedScene.role}`;
+
+            // 重置状态
+            conversation = [];
+            score = 0;
+            turnCount = 0;
+            isPracticeEnded = false;
+            updateScore(0);
+
+            // 添加开场白
+            addMessage('boss', selectedScene.opening);
+
+            // 滚动到底部
+            scrollToBottom();
+        }
+
+        function backToScenes() {
+            if (turnCount > 0 && !isPracticeEnded) {
+                if (!confirm('当前练习还未结束，确定要返回场景选择吗？')) return;
+            }
+            document.getElementById('sceneSelectCard').style.display = 'block';
+            document.getElementById('chatContainer').style.display = 'none';
+            document.getElementById('backToScenesBtn').style.display = 'none';
+            document.getElementById('feedbackPanel').style.display = 'none';
+            document.getElementById('restartBtn').style.display = 'inline-block';
+        }
+
+        // ==================== 对话逻辑 ====================
+        function addMessage(type, content) {
+            const messages = document.getElementById('chatMessages');
+            const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${type === 'boss' ? '👔' : '👤'}</div>
+                <div>
+                    <div class="message-content">${content}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            messages.appendChild(messageDiv);
+            conversation.push({ type, content, time });
+            scrollToBottom();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const content = input.value.trim();
+            
+            if (!content || isPracticeEnded) return;
+
+            // 添加用户消息
+            addMessage('user', content);
+            input.value = '';
+
+            // 增加轮次
+            turnCount++;
+
+            // 模拟 AI 回复（延迟）
+            setTimeout(() => {
+                generateResponse(content);
+            }, 1000 + Math.random() * 1000);
+        }
+
+        function generateResponse(userContent) {
+            // 简单的情绪和关键词分析
+            const analysis = analyzeContent(userContent);
+            
+            // 更新分数
+            const turnScore = calculateTurnScore(analysis);
+            score += turnScore;
+            updateScore(score);
+
+            // 生成回复
+            const response = generateBossResponse(analysis, turnCount);
+            addMessage('boss', response);
+
+            // 显示参考模板（每轮都显示）
+            showTemplate();
+
+            // 显示反馈（每 3 轮显示一次）
+            if (turnCount % 3 === 0 && turnCount > 0) {
+                showFeedback(analysis);
+            }
+
+            scrollToBottom();
+        }
+
+        function analyzeContent(content) {
+            // 关键词分析
+            const positiveKeywords = ['完成', '已经', '好的', '明白', '计划', '方案', '数据', '结果', '进展', '解决'];
+            const negativeKeywords = ['不知道', '可能', '大概', '应该', '问题', '困难', '但是', '不过'];
+            const actionKeywords = ['会', '将', '马上', '立即', '今天', '明天', '本周'];
+            
+            const positiveCount = positiveKeywords.filter(k => content.includes(k)).length;
+            const negativeCount = negativeKeywords.filter(k => content.includes(k)).length;
+            const actionCount = actionKeywords.filter(k => content.includes(k)).length;
+
+            // 长度分析
+            const length = content.length;
+            const hasData = /\d+/.test(content); // 是否包含数字
+            const hasStructure = content.includes('首先') || content.includes('其次') || content.includes('最后') || content.includes('第一') || content.includes('第二');
+
+            return {
+                positive: positiveCount,
+                negative: negativeCount,
+                action: actionCount,
+                length,
+                hasData,
+                hasStructure,
+                confidence: positiveCount - negativeCount + actionCount
+            };
+        }
+
+        function calculateTurnScore(analysis) {
+            let score = 5; // 基础分
+            
+            // 积极词汇加分
+            score += Math.min(analysis.positive * 1.5, 6);
+            
+            // 消极词汇减分
+            score -= Math.min(analysis.negative * 1, 4);
+            
+            // 行动词汇加分
+            score += Math.min(analysis.action * 2, 6);
+            
+            // 长度适中加分
+            if (analysis.length > 20 && analysis.length < 200) score += 2;
+            
+            // 有数据加分
+            if (analysis.hasData) score += 3;
+            
+            // 有结构加分
+            if (analysis.hasStructure) score += 2;
+
+            return Math.max(1, Math.min(15, Math.round(score)));
+        }
+
+        function generateBossResponse(analysis, turn) {
+            const responses = {
+                positive: [
+                    '好的，我了解了。',
+                    '嗯，继续说。',
+                    '这个思路不错。',
+                    '很好，我认可你的想法。',
+                    '明白了，你做得很好。'
+                ],
+                neutral: [
+                    '嗯，然后呢？',
+                    '还有其他要补充的吗？',
+                    '我听着，继续。',
+                    '好的，请继续说明。',
+                    '嗯，明白了。'
+                ],
+                probing: [
+                    '能具体说说吗？',
+                    '这个数据是怎么来的？',
+                    '你有什么具体的计划吗？',
+                    '如果遇到这个问题，你打算怎么处理？',
+                    '能给我一个更详细的时间表吗？'
+                ],
+                encouraging: [
+                    '很好，继续保持！',
+                    '你的思考很全面。',
+                    '这个方案很可行。',
+                    '我看好你的计划。',
+                    '做得不错，继续推进吧。'
+                ]
+            };
+
+            // 根据分析选择回复类型
+            if (analysis.confidence > 3) {
+                return responses.encouraging[Math.floor(Math.random() * responses.encouraging.length)];
+            } else if (analysis.confidence > 0) {
+                return responses.positive[Math.floor(Math.random() * responses.positive.length)];
+            } else if (analysis.hasData || analysis.hasStructure) {
+                return responses.probing[Math.floor(Math.random() * responses.probing.length)];
+            } else {
+                return responses.neutral[Math.floor(Math.random() * responses.neutral.length)];
+            }
+        }
+
+        function updateScore(newScore) {
+            document.getElementById('scoreNumber').textContent = newScore;
+        }
+
+        function showFeedback(analysis) {
+            const panel = document.getElementById('feedbackPanel');
+            const expression = document.getElementById('feedbackExpression');
+            const suggestion = document.getElementById('feedbackSuggestion');
+            const stars = document.getElementById('feedbackStars');
+
+            // 表达方式反馈
+            if (analysis.confidence > 3) {
+                expression.textContent = '表达清晰、积极，展现了良好的沟通态度和专业性。';
+            } else if (analysis.confidence > 0) {
+                expression.textContent = '表达较为清晰，可以适当增加具体数据和行动计划。';
+            } else {
+                expression.textContent = '表达略显模糊，建议更明确地说明情况和计划。';
+            }
+
+            // 改进建议
+            const suggestions = [];
+            if (!analysis.hasData) {
+                suggestions.push('• 增加具体数据支撑观点');
+            }
+            if (!analysis.hasStructure) {
+                suggestions.push('• 使用结构化表达（首先、其次、最后）');
+            }
+            if (analysis.negative > analysis.positive) {
+                suggestions.push('• 减少模糊词汇，增加确定性表达');
+            }
+            if (analysis.action === 0) {
+                suggestions.push('• 增加明确的行动计划和时间节点');
+            }
+            if (analysis.length < 20) {
+                suggestions.push('• 回复可以更详细一些，提供更多信息');
+            }
+
+            suggestion.textContent = suggestions.length > 0 
+                ? suggestions.join('\n') 
+                : '继续保持！你的表达已经很清晰了。';
+
+            // 星级评分
+            const avgScore = score / turnCount;
+            const starCount = avgScore >= 12 ? 5 : avgScore >= 10 ? 4 : avgScore >= 8 ? 3 : avgScore >= 6 ? 2 : 1;
+            stars.textContent = '⭐'.repeat(starCount) + '☆'.repeat(5 - starCount);
+
+            panel.style.display = 'block';
+            setTimeout(() => {
+                panel.style.display = 'none';
+            }, 8000);
+        }
+
+        function endPractice() {
+            if (turnCount === 0) {
+                alert('还没有开始对话呢！');
+                return;
+            }
+
+            isPracticeEnded = true;
+            document.getElementById('endBtn').style.display = 'none';
+            document.getElementById('restartBtn').style.display = 'inline-block';
+            document.getElementById('templatePanel').style.display = 'none';
+
+            // 显示最终反馈
+            showFinalFeedback();
+        }
+
+        let hideTemplateTimer = null;
+
+        function showTemplate() {
+            if (!selectedScene || !selectedScene.templates) return;
+
+            const panel = document.getElementById('templatePanel');
+            const templateText = document.getElementById('templateText');
+            const templateTips = document.getElementById('templateTips');
+
+            // 随机选择一个模板
+            const templates = selectedScene.templates;
+            const template = templates[Math.floor(Math.random() * templates.length)];
+
+            templateText.textContent = template.text;
+            templateTips.innerHTML = template.tips.map(tip => `<li>${tip}</li>`).join('');
+
+            panel.style.display = 'block';
+
+            // 清除之前的定时器
+            if (hideTemplateTimer) clearTimeout(hideTemplateTimer);
+
+            // 添加鼠标悬停事件 - 悬停时不隐藏
+            panel.onmouseenter = function() {
+                if (hideTemplateTimer) clearTimeout(hideTemplateTimer);
+            };
+
+            panel.onmouseleave = function() {
+                // 鼠标离开后 2 秒隐藏
+                hideTemplateTimer = setTimeout(() => {
+                    panel.style.display = 'none';
+                }, 2000);
+            };
+
+            // 30 秒后自动隐藏（防止一直占用空间）
+            hideTemplateTimer = setTimeout(() => {
+                panel.style.display = 'none';
+            }, 30000);
+        }
+
+        function showFinalFeedback() {
+            const avgScore = score / turnCount;
+            const panel = document.getElementById('feedbackPanel');
+            const expression = document.getElementById('feedbackExpression');
+            const suggestion = document.getElementById('feedbackSuggestion');
+            const stars = document.getElementById('feedbackStars');
+
+            expression.textContent = `练习完成！共对话 ${turnCount} 轮，平均得分 ${avgScore.toFixed(1)} 分。`;
+            
+            let finalSuggestion = `📊 练习总结：\n`;
+            finalSuggestion += `• 总得分：${score} 分\n`;
+            finalSuggestion += `• 平均得分：${avgScore.toFixed(1)} 分/轮\n`;
+            finalSuggestion += `• 对话轮次：${turnCount} 轮\n\n`;
+            
+            if (avgScore >= 12) {
+                finalSuggestion += '🌟 表现优秀！你的沟通表达清晰、结构化，善于使用数据和行动计划。继续保持！';
+            } else if (avgScore >= 8) {
+                finalSuggestion += '👍 表现良好！整体沟通流畅，可以在数据支撑和结构化表达上继续提升。';
+            } else {
+                finalSuggestion += '📚 需要加油！建议多练习结构化表达，增加具体数据和明确的行动计划。';
+            }
+
+            suggestion.textContent = finalSuggestion;
+
+            const starCount = avgScore >= 12 ? 5 : avgScore >= 10 ? 4 : avgScore >= 8 ? 3 : avgScore >= 6 ? 2 : 1;
+            stars.textContent = '⭐'.repeat(starCount) + '☆'.repeat(5 - starCount);
+
+            panel.style.display = 'block';
+        }
+
+        function restartPractice() {
+            document.getElementById('chatMessages').innerHTML = '';
+            document.getElementById('feedbackPanel').style.display = 'none';
+            document.getElementById('templatePanel').style.display = 'none';
+            document.getElementById('endBtn').style.display = 'inline-block';
+            document.getElementById('restartBtn').style.display = 'none';
+            document.getElementById('chatInput').value = '';
+            
+            conversation = [];
+            score = 0;
+            turnCount = 0;
+            isPracticeEnded = false;
+            updateScore(0);
+
+            if (selectedScene) {
+                addMessage('boss', selectedScene.opening);
+            }
+        }
+
+        function scrollToBottom() {
+            const messages = document.getElementById('chatMessages');
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // 监听回车键发送
+        document.getElementById('chatInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
