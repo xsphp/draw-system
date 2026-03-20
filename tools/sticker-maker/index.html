@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表情包制作工具 - 许先生的工具箱</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .panel h3 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            font-size: 1.1em;
+        }
+
+        .canvas-container {
+            position: relative;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mainCanvas {
+            max-width: 100%;
+            max-height: 500px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .upload-area:hover {
+            background: #f0f0ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e8e8ff;
+            border-color: #764ba2;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .control-group input[type="text"],
+        .control-group input[type="number"],
+        .control-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .control-group input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .sticker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .sticker-item {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            transition: all 0.3s;
+        }
+
+        .sticker-item:hover {
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .template-item {
+            aspect-ratio: 1;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .template-item:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .template-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .filter-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .filter-btn {
+            padding: 8px;
+            font-size: 12px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .size-presets {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .size-btn {
+            padding: 8px;
+            font-size: 12px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .size-btn:hover,
+        .size-btn.active {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .text-layer {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .gif-controls {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .gif-frames {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .gif-frame {
+            aspect-ratio: 1;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .gif-frame.active {
+            border-color: #667eea;
+        }
+
+        .gif-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="../../index.html" class="back-btn">← 返回工具箱</a>
+            <h1>🎨 表情包制作工具</h1>
+            <p>一键制作专属表情包 - 裁剪、抠图、文字、滤镜、模板、GIF 全支持</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 左侧控制面板 -->
+            <div class="panel">
+                <h3>📐 基础设置</h3>
+                
+                <div class="control-group">
+                    <label>画布尺寸</label>
+                    <div class="size-presets">
+                        <button class="size-btn active" data-width="512" data-height="512">微信 512×512</button>
+                        <button class="size-btn" data-width="240" data-height="240">微信 240×240</button>
+                        <button class="size-btn" data-width="400" data-height="400">QQ 400×400</button>
+                        <button class="size-btn" data-width="500" data-height="500">自定义 500×500</button>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <input type="number" id="canvasWidth" value="512" placeholder="宽">
+                        <input type="number" id="canvasHeight" value="512" placeholder="高">
+                        <button class="btn btn-secondary" onclick="updateCanvasSize()">应用</button>
+                    </div>
+                </div>
+
+                <h3>🖼️ 图片操作</h3>
+                
+                <div class="control-group">
+                    <label>滤镜效果</label>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="none">原图</button>
+                        <button class="filter-btn" data-filter="grayscale(100%)">黑白</button>
+                        <button class="filter-btn" data-filter="sepia(100%)">复古</button>
+                        <button class="filter-btn" data-filter="contrast(150%)">高对比</button>
+                        <button class="filter-btn" data-filter="saturate(200%)">鲜艳</button>
+                        <button class="filter-btn" data-filter="brightness(120%)">增亮</button>
+                        <button class="filter-btn" data-filter="blur(2px)">模糊</button>
+                        <button class="filter-btn" data-filter="invert(100%)">反色</button>
+                        <button class="filter-btn" data-filter="hue-rotate(90deg)">变色</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>AI 抠图</label>
+                    <button class="btn btn-primary btn-block" onclick="removeBackground()">🪄 一键去除背景</button>
+                    <p style="font-size: 12px; color: #666; margin-top: 5px;">使用 AI 智能识别并去除背景</p>
+                </div>
+
+                <div class="control-group">
+                    <label>图片调整</label>
+                    <label style="font-size: 12px;">旋转</label>
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <button class="btn btn-secondary" onclick="rotateImage(-90)">↺ -90°</button>
+                        <button class="btn btn-secondary" onclick="rotateImage(90)">↻ +90°</button>
+                        <button class="btn btn-secondary" onclick="rotateImage(180)">↻ 180°</button>
+                    </div>
+                    <label style="font-size: 12px;">翻转</label>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn btn-secondary" onclick="flipImage('h')">↔ 水平</button>
+                        <button class="btn btn-secondary" onclick="flipImage('v')">↕ 垂直</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中间画布区域 -->
+            <div class="canvas-container">
+                <canvas id="mainCanvas" width="512" height="512"></canvas>
+                <div id="uploadPlaceholder" class="upload-area" onclick="document.getElementById('imageInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <h3>点击或拖拽上传图片</h3>
+                    <p style="color: #666; margin-top: 10px;">支持 JPG、PNG、GIF、WebP 格式</p>
+                </div>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+            </div>
+
+            <!-- 右侧编辑面板 -->
+            <div class="panel">
+                <div class="tabs">
+                    <div class="tab active" data-tab="text">文字</div>
+                    <div class="tab" data-tab="sticker">贴纸</div>
+                    <div class="tab" data-tab="template">模板</div>
+                    <div class="tab" data-tab="gif">GIF</div>
+                </div>
+
+                <!-- 文字编辑 -->
+                <div class="tab-content active" id="text-tab">
+                    <div class="control-group">
+                        <label>文字内容</label>
+                        <input type="text" id="textContent" placeholder="输入表情文字">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>字体大小</label>
+                        <input type="range" id="fontSize" min="16" max="120" value="48" oninput="updateFontSize()">
+                        <span id="fontSizeValue">48px</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label>文字颜色</label>
+                        <input type="color" id="textColor" value="#ffffff">
+                    </div>
+
+                    <div class="control-group">
+                        <label>描边颜色</label>
+                        <input type="color" id="strokeColor" value="#000000">
+                    </div>
+
+                    <div class="control-group">
+                        <label>描边粗细</label>
+                        <input type="range" id="strokeWidth" min="0" max="10" value="3" oninput="updateStrokeWidth()">
+                        <span id="strokeWidthValue">3px</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label>气泡样式</label>
+                        <select id="bubbleStyle">
+                            <option value="none">无气泡</option>
+                            <option value="round">圆角气泡</option>
+                            <option value="speech">对话气泡</option>
+                            <option value="thought">思考气泡</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary btn-block" onclick="addText()">➕ 添加文字</button>
+                    <button class="btn btn-danger btn-block" onclick="clearTexts()">🗑️ 清除所有文字</button>
+                </div>
+
+                <!-- 贴纸编辑 -->
+                <div class="tab-content" id="sticker-tab">
+                    <div class="control-group">
+                        <label>热门贴纸</label>
+                        <div class="sticker-grid">
+                            <div class="sticker-item" onclick="addSticker('😂')">😂</div>
+                            <div class="sticker-item" onclick="addSticker('😍')">😍</div>
+                            <div class="sticker-item" onclick="addSticker('🥺')">🥺</div>
+                            <div class="sticker-item" onclick="addSticker('😭')">😭</div>
+                            <div class="sticker-item" onclick="addSticker('🤣')">🤣</div>
+                            <div class="sticker-item" onclick="addSticker('😎')">😎</div>
+                            <div class="sticker-item" onclick="addSticker('🙄')">🙄</div>
+                            <div class="sticker-item" onclick="addSticker('😤')">😤</div>
+                            <div class="sticker-item" onclick="addSticker('💀')">💀</div>
+                            <div class="sticker-item" onclick="addSticker('✨')">✨</div>
+                            <div class="sticker-item" onclick="addSticker('💖')">💖</div>
+                            <div class="sticker-item" onclick="addSticker('🔥')">🔥</div>
+                            <div class="sticker-item" onclick="addSticker('💦')">💦</div>
+                            <div class="sticker-item" onclick="addSticker('😅')">😅</div>
+                            <div class="sticker-item" onclick="addSticker('👍')">👍</div>
+                            <div class="sticker-item" onclick="addSticker('❤️')">❤️</div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>贴纸大小</label>
+                        <input type="range" id="stickerSize" min="20" max="200" value="60" oninput="updateStickerSize()">
+                        <span id="stickerSizeValue">60px</span>
+                    </div>
+                </div>
+
+                <!-- 模板选择 -->
+                <div class="tab-content" id="template-tab">
+                    <div class="control-group">
+                        <label>热门模板</label>
+                        <div class="template-grid">
+                            <div class="template-item" onclick="applyTemplate('panda')">
+                                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;font-size:2em;">🐼</div>
+                            </div>
+                            <div class="template-item" onclick="applyTemplate('cat')">
+                                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;font-size:2em;">🐱</div>
+                            </div>
+                            <div class="template-item" onclick="applyTemplate('dog')">
+                                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;font-size:2em;">🐶</div>
+                            </div>
+                            <div class="template-item" onclick="applyTemplate('frog')">
+                                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f0f0f0;font-size:2em;">🐸</div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary btn-block" onclick="loadTemplateImage()">📷 从本地加载模板</button>
+                </div>
+
+                <!-- GIF 制作 -->
+                <div class="tab-content" id="gif-tab">
+                    <div class="gif-controls">
+                        <label>🎬 GIF 动画制作</label>
+                        <p style="font-size: 12px; color: #666;">上传多张图片制作动态表情包</p>
+                        <input type="file" id="gifInput" accept="image/*" multiple style="display: none;" onchange="handleGifUpload(event)">
+                        <button class="btn btn-primary btn-block" onclick="document.getElementById('gifInput').click()" style="margin-top: 10px;">📁 选择多张图片</button>
+                        
+                        <div class="gif-frames" id="gifFrames"></div>
+                        
+                        <div class="control-group" style="margin-top: 15px;">
+                            <label>帧延迟 (ms)</label>
+                            <input type="number" id="gifDelay" value="500" min="100" max="2000" step="100">
+                        </div>
+                        
+                        <button class="btn btn-success btn-block" onclick="generateGif()">🎬 生成 GIF</button>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="gifProgress"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="margin: 20px 0;">
+
+                <h3>💾 导出</h3>
+                
+                <div class="control-group">
+                    <label>输出格式</label>
+                    <select id="outputFormat">
+                        <option value="png">PNG (推荐)</option>
+                        <option value="jpeg">JPEG</option>
+                        <option value="webp">WebP</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>输出质量</label>
+                    <input type="range" id="outputQuality" min="1" max="100" value="95">
+                    <span id="qualityValue">95%</span>
+                </div>
+
+                <button class="btn btn-success btn-block" onclick="downloadImage()">💾 下载表情包</button>
+                <button class="btn btn-secondary btn-block" onclick="resetAll()">🔄 重置所有</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载提示 -->
+    <div class="loading" id="loading">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loadingText">处理中...</p>
+        </div>
+    </div>
+
+    <!-- 引入必要的库 -->
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.3.0/dist/imgly-background-removal.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
+
+    <script>
+        // 全局变量
+        let canvas = document.getElementById('mainCanvas');
+        let ctx = canvas.getContext('2d');
+        let currentImage = null;
+        let texts = [];
+        let stickers = [];
+        let currentFilter = 'none';
+        let rotation = 0;
+        let flipH = 1;
+        let flipV = 1;
+        let gifFrames = [];
+        let isDragging = false;
+        let draggedElement = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        // 初始化
+        function init() {
+            clearCanvas();
+            setupEventListeners();
+        }
+
+        // 清空画布
+        function clearCanvas() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 设置事件监听
+        function setupEventListeners() {
+            // 拖拽上传
+            const uploadArea = document.getElementById('uploadPlaceholder');
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    loadImage(files[0]);
+                }
+            });
+
+            // Tab 切换
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                });
+            });
+
+            // 尺寸预设
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('canvasWidth').value = btn.dataset.width;
+                    document.getElementById('canvasHeight').value = btn.dataset.height;
+                });
+            });
+
+            // 滤镜按钮
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    renderCanvas();
+                });
+            });
+
+            // 画布鼠标事件
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            canvas.addEventListener('mouseout', handleMouseUp);
+
+            // 触摸事件
+            canvas.addEventListener('touchstart', handleTouchStart);
+            canvas.addEventListener('touchmove', handleTouchMove);
+            canvas.addEventListener('touchend', handleTouchEnd);
+
+            // 质量滑块
+            document.getElementById('outputQuality').addEventListener('input', (e) => {
+                document.getElementById('qualityValue').textContent = `${e.target.value}%`;
+            });
+        }
+
+        // 处理图片上传
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                loadImage(file);
+            }
+        }
+
+        // 加载图片
+        function loadImage(file) {
+            showLoading('加载图片中...');
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    currentImage = img;
+                    document.getElementById('uploadPlaceholder').style.display = 'none';
+                    rotation = 0;
+                    flipH = 1;
+                    flipV = 1;
+                    renderCanvas();
+                    hideLoading();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 渲染画布
+        function renderCanvas() {
+            clearCanvas();
+            
+            if (currentImage) {
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate((rotation * Math.PI) / 180);
+                ctx.scale(flipH, flipV);
+                
+                // 应用滤镜
+                if (currentFilter !== 'none') {
+                    ctx.filter = currentFilter;
+                }
+                
+                // 计算缩放以适应画布
+                const scale = Math.min(
+                    canvas.width / currentImage.width * 0.9,
+                    canvas.height / currentImage.height * 0.9
+                );
+                
+                const width = currentImage.width * scale;
+                const height = currentImage.height * scale;
+                
+                ctx.drawImage(currentImage, -width / 2, -height / 2, width, height);
+                ctx.restore();
+            }
+
+            // 绘制文字
+            texts.forEach(text => {
+                ctx.save();
+                ctx.font = `${text.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 绘制气泡
+                if (text.bubble !== 'none') {
+                    const metrics = ctx.measureText(text.content);
+                    const padding = 20;
+                    const bubbleWidth = metrics.width + padding * 2;
+                    const bubbleHeight = text.size + padding * 2;
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    
+                    if (text.bubble === 'round') {
+                        roundRect(ctx, text.x - bubbleWidth/2, text.y - bubbleHeight/2, bubbleWidth, bubbleHeight, 15);
+                        ctx.fill();
+                        ctx.stroke();
+                    } else if (text.bubble === 'speech') {
+                        roundRect(ctx, text.x - bubbleWidth/2, text.y - bubbleHeight/2, bubbleWidth, bubbleHeight, 15);
+                        ctx.fill();
+                        ctx.stroke();
+                        // 添加小尾巴
+                        ctx.beginPath();
+                        ctx.moveTo(text.x - 10, text.y + bubbleHeight/2);
+                        ctx.lineTo(text.x + 10, text.y + bubbleHeight/2);
+                        ctx.lineTo(text.x, text.y + bubbleHeight/2 + 15);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    } else if (text.bubble === 'thought') {
+                        ctx.beginPath();
+                        ctx.arc(text.x, text.y, bubbleWidth/2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        // 添加小泡泡
+                        ctx.beginPath();
+                        ctx.arc(text.x - 30, text.y + 40, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.arc(text.x - 45, text.y + 55, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                }
+                
+                // 绘制描边
+                if (text.strokeWidth > 0) {
+                    ctx.strokeStyle = text.strokeColor;
+                    ctx.lineWidth = text.strokeWidth;
+                    ctx.strokeText(text.content, text.x, text.y);
+                }
+                
+                // 绘制文字
+                ctx.fillStyle = text.color;
+                ctx.fillText(text.content, text.x, text.y);
+                ctx.restore();
+            });
+
+            // 绘制贴纸
+            stickers.forEach(sticker => {
+                ctx.save();
+                ctx.font = `${sticker.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(sticker.content, sticker.x, sticker.y);
+                ctx.restore();
+            });
+        }
+
+        // 绘制圆角矩形
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        // 添加文字
+        function addText() {
+            const content = document.getElementById('textContent').value;
+            if (!content) {
+                alert('请输入文字内容');
+                return;
+            }
+            
+            texts.push({
+                content: content,
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                size: parseInt(document.getElementById('fontSize').value),
+                color: document.getElementById('textColor').value,
+                strokeColor: document.getElementById('strokeColor').value,
+                strokeWidth: parseInt(document.getElementById('strokeWidth').value),
+                bubble: document.getElementById('bubbleStyle').value
+            });
+            
+            renderCanvas();
+            document.getElementById('textContent').value = '';
+        }
+
+        // 添加贴纸
+        function addSticker(emoji) {
+            stickers.push({
+                content: emoji,
+                x: canvas.width / 2 + (Math.random() - 0.5) * 100,
+                y: canvas.height / 2 + (Math.random() - 0.5) * 100,
+                size: parseInt(document.getElementById('stickerSize').value)
+            });
+            renderCanvas();
+        }
+
+        // 更新字体大小
+        function updateFontSize() {
+            document.getElementById('fontSizeValue').textContent = `${document.getElementById('fontSize').value}px`;
+        }
+
+        // 更新描边粗细
+        function updateStrokeWidth() {
+            document.getElementById('strokeWidthValue').textContent = `${document.getElementById('strokeWidth').value}px`;
+        }
+
+        // 更新贴纸大小
+        function updateStickerSize() {
+            document.getElementById('stickerSizeValue').textContent = `${document.getElementById('stickerSize').value}px`;
+        }
+
+        // 清除所有文字
+        function clearTexts() {
+            texts = [];
+            renderCanvas();
+        }
+
+        // 更新画布尺寸
+        function updateCanvasSize() {
+            const width = parseInt(document.getElementById('canvasWidth').value);
+            const height = parseInt(document.getElementById('canvasHeight').value);
+            canvas.width = width;
+            canvas.height = height;
+            renderCanvas();
+        }
+
+        // 旋转图片
+        function rotateImage(degrees) {
+            rotation = (rotation + degrees) % 360;
+            renderCanvas();
+        }
+
+        // 翻转图片
+        function flipImage(direction) {
+            if (direction === 'h') {
+                flipH = -flipH;
+            } else {
+                flipV = -flipV;
+            }
+            renderCanvas();
+        }
+
+        // AI 抠图
+        async function removeBackground() {
+            if (!currentImage) {
+                alert('请先上传图片');
+                return;
+            }
+            
+            showLoading('AI 抠图中，请稍候...（首次使用需下载模型）');
+            
+            try {
+                const blob = await imglyRemoveBackground(canvas.toDataURL('image/png'));
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.onload = () => {
+                    currentImage = img;
+                    renderCanvas();
+                    hideLoading();
+                };
+                img.src = url;
+            } catch (error) {
+                console.error('抠图失败:', error);
+                hideLoading();
+                alert('AI 抠图失败，请检查网络连接后重试');
+            }
+        }
+
+        // 应用模板
+        function applyTemplate(templateName) {
+            showLoading('加载模板中...');
+            // 这里可以使用预设的模板图片 URL
+            const templateUrls = {
+                panda: 'https://cdn-icons-png.flaticon.com/512/3069/3069172.png',
+                cat: 'https://cdn-icons-png.flaticon.com/512/616/616430.png',
+                dog: 'https://cdn-icons-png.flaticon.com/512/616/616408.png',
+                frog: 'https://cdn-icons-png.flaticon.com/512/3069/3069176.png'
+            };
+            
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                currentImage = img;
+                document.getElementById('uploadPlaceholder').style.display = 'none';
+                rotation = 0;
+                flipH = 1;
+                flipV = 1;
+                renderCanvas();
+                hideLoading();
+            };
+            img.onerror = () => {
+                hideLoading();
+                alert('模板加载失败，请尝试从本地加载');
+            };
+            img.src = templateUrls[templateName];
+        }
+
+        // 从本地加载模板
+        function loadTemplateImage() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => {
+                if (e.target.files[0]) {
+                    loadImage(e.target.files[0]);
+                }
+            };
+            input.click();
+        }
+
+        // GIF 相关
+        function handleGifUpload(event) {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+            
+            gifFrames = [];
+            const framesContainer = document.getElementById('gifFrames');
+            framesContainer.innerHTML = '';
+            
+            showLoading(`处理 ${files.length} 张图片...`);
+            
+            let loaded = 0;
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        gifFrames.push(img);
+                        
+                        // 添加帧预览
+                        const frameDiv = document.createElement('div');
+                        frameDiv.className = 'gif-frame';
+                        const frameImg = document.createElement('img');
+                        frameImg.src = e.target.result;
+                        frameDiv.appendChild(frameImg);
+                        frameDiv.onclick = () => {
+                            currentImage = img;
+                            renderCanvas();
+                        };
+                        framesContainer.appendChild(frameDiv);
+                        
+                        loaded++;
+                        if (loaded === files.length) {
+                            hideLoading();
+                            if (gifFrames.length > 0) {
+                                currentImage = gifFrames[0];
+                                renderCanvas();
+                            }
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 生成 GIF
+        function generateGif() {
+            if (gifFrames.length < 2) {
+                alert('请至少上传 2 张图片来制作 GIF');
+                return;
+            }
+            
+            showLoading('生成 GIF 中，请稍候...');
+            
+            const gif = new GIF({
+                workers: 2,
+                quality: 10,
+                width: canvas.width,
+                height: canvas.height,
+                workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'
+            });
+            
+            const delay = parseInt(document.getElementById('gifDelay').value);
+            
+            gifFrames.forEach((frame, index) => {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                tempCtx.fillStyle = '#ffffff';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                const scale = Math.min(
+                    tempCanvas.width / frame.width * 0.9,
+                    tempCanvas.height / frame.height * 0.9
+                );
+                const width = frame.width * scale;
+                const height = frame.height * scale;
+                
+                tempCtx.drawImage(frame, 
+                    (tempCanvas.width - width) / 2, 
+                    (tempCanvas.height - height) / 2, 
+                    width, height
+                );
+                
+                gif.addFrame(tempCanvas, {delay: delay});
+            });
+            
+            gif.on('progress', (p) => {
+                document.getElementById('gifProgress').style.width = `${p * 100}%`;
+            });
+            
+            gif.on('finished', (blob) => {
+                hideLoading();
+                document.getElementById('gifProgress').style.width = '0%';
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sticker-${Date.now()}.gif`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+            
+            gif.render();
+        }
+
+        // 下载图片
+        function downloadImage() {
+            if (!currentImage && texts.length === 0 && stickers.length === 0) {
+                alert('请先制作表情包');
+                return;
+            }
+            
+            const format = document.getElementById('outputFormat').value;
+            const quality = parseInt(document.getElementById('outputQuality').value) / 100;
+            
+            let dataUrl;
+            if (format === 'jpeg') {
+                // JPEG 需要白色背景
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.fillStyle = '#ffffff';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.drawImage(canvas, 0, 0);
+                dataUrl = tempCanvas.toDataURL('image/jpeg', quality);
+            } else {
+                dataUrl = canvas.toDataURL(`image/${format}`, quality);
+            }
+            
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `sticker-${Date.now()}.${format}`;
+            a.click();
+        }
+
+        // 重置所有
+        function resetAll() {
+            if (confirm('确定要重置所有设置吗？')) {
+                currentImage = null;
+                texts = [];
+                stickers = [];
+                gifFrames = [];
+                rotation = 0;
+                flipH = 1;
+                flipV = 1;
+                currentFilter = 'none';
+                document.getElementById('uploadPlaceholder').style.display = 'block';
+                document.getElementById('gifFrames').innerHTML = '';
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.filter-btn[data-filter="none"]').classList.add('active');
+                clearCanvas();
+            }
+        }
+
+        // 鼠标事件处理
+        function handleMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+            
+            // 检查是否点击到文字
+            for (let i = texts.length - 1; i >= 0; i--) {
+                const text = texts[i];
+                const ctx = canvas.getContext('2d');
+                ctx.font = `${text.size}px Arial`;
+                const metrics = ctx.measureText(text.content);
+                const width = metrics.width + 20;
+                const height = text.size + 20;
+                
+                if (x >= text.x - width/2 && x <= text.x + width/2 &&
+                    y >= text.y - height/2 && y <= text.y + height/2) {
+                    isDragging = true;
+                    draggedElement = { type: 'text', index: i };
+                    dragOffsetX = x - text.x;
+                    dragOffsetY = y - text.y;
+                    return;
+                }
+            }
+            
+            // 检查是否点击到贴纸
+            for (let i = stickers.length - 1; i >= 0; i--) {
+                const sticker = stickers[i];
+                const size = sticker.size;
+                
+                if (x >= sticker.x - size/2 && x <= sticker.x + size/2 &&
+                    y >= sticker.y - size/2 && y <= sticker.y + size/2) {
+                    isDragging = true;
+                    draggedElement = { type: 'sticker', index: i };
+                    dragOffsetX = x - sticker.x;
+                    dragOffsetY = y - sticker.y;
+                    return;
+                }
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (!isDragging || !draggedElement) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+            
+            if (draggedElement.type === 'text') {
+                texts[draggedElement.index].x = x - dragOffsetX;
+                texts[draggedElement.index].y = y - dragOffsetY;
+            } else {
+                stickers[draggedElement.index].x = x - dragOffsetX;
+                stickers[draggedElement.index].y = y - dragOffsetY;
+            }
+            
+            renderCanvas();
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+            draggedElement = null;
+        }
+
+        // 触摸事件处理
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            handleMouseDown(mouseEvent);
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            handleMouseMove(mouseEvent);
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            handleMouseUp();
+        }
+
+        // 加载提示
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loading').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        // 初始化
+        init();
+    </script>
+</body>
+</html>
