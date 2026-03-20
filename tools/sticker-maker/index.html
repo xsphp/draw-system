@@ -675,10 +675,8 @@
         </div>
     </div>
 
-    <!-- 引入必要的库 -->
+    <!-- 引入必要的库（仅保留轻量依赖，其余按需加载） -->
     <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.3.0/dist/imgly-background-removal.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
 
     <script>
         // 全局变量
@@ -1002,29 +1000,140 @@
             renderCanvas();
         }
 
-        // AI 抠图
+        // AI 抠图（本地智能算法，无需联网）
         async function removeBackground() {
             if (!currentImage) {
                 alert('请先上传图片');
                 return;
             }
-            
-            showLoading('AI 抠图中，请稍候...（首次使用需下载模型）');
-            
+
+            showLoading('智能去除背景中，请稍候...');
+
             try {
-                const blob = await imglyRemoveBackground(canvas.toDataURL('image/png'));
-                const url = URL.createObjectURL(blob);
-                const img = new Image();
-                img.onload = () => {
-                    currentImage = img;
+                // 将当前画布内容绘制到离屏 canvas 取像素
+                const offscreen = document.createElement('canvas');
+                offscreen.width = canvas.width;
+                offscreen.height = canvas.height;
+                const offCtx = offscreen.getContext('2d');
+                offCtx.drawImage(canvas, 0, 0);
+
+                const imageData = offCtx.getImageData(0, 0, offscreen.width, offscreen.height);
+                const data = imageData.data;
+                const w = offscreen.width;
+                const h = offscreen.height;
+
+                // --- 智能去背景：颜色聚类 + 边缘检测 ---
+                // 第一步：采样四个角落和四条边缘各5个点，收集背景颜色样本
+                const bgSamples = [];
+                const samplePoints = [];
+                const edgeStep = Math.floor(Math.min(w, h) / 6);
+
+                // 四个角
+                samplePoints.push([0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]);
+                // 四边采样
+                for (let i = 1; i <= 5; i++) {
+                    samplePoints.push([Math.floor(w * i / 6), 0]);
+                    samplePoints.push([Math.floor(w * i / 6), h - 1]);
+                    samplePoints.push([0, Math.floor(h * i / 6)]);
+                    samplePoints.push([w - 1, Math.floor(h * i / 6)]);
+                }
+
+                samplePoints.forEach(([x, y]) => {
+                    const idx = (y * w + x) * 4;
+                    bgSamples.push([data[idx], data[idx + 1], data[idx + 2]]);
+                });
+
+                // 计算背景平均颜色
+                const bgR = bgSamples.reduce((s, c) => s + c[0], 0) / bgSamples.length;
+                const bgG = bgSamples.reduce((s, c) => s + c[1], 0) / bgSamples.length;
+                const bgB = bgSamples.reduce((s, c) => s + c[2], 0) / bgSamples.length;
+
+                // 第二步：计算颜色方差，决定容差阈值（颜色越均匀容差越小）
+                const variance = bgSamples.reduce((s, c) => {
+                    return s + Math.pow(c[0] - bgR, 2) + Math.pow(c[1] - bgG, 2) + Math.pow(c[2] - bgB, 2);
+                }, 0) / bgSamples.length;
+                const tolerance = Math.min(80, Math.max(30, Math.sqrt(variance) * 1.5 + 30));
+
+                // 第三步：Flood Fill 从边缘扩散，标记背景像素
+                const visited = new Uint8Array(w * h);
+                const isBackground = new Uint8Array(w * h);
+                const queue = [];
+
+                // 从四边出发
+                for (let x = 0; x < w; x++) {
+                    queue.push(x, 0);
+                    queue.push(x, h - 1);
+                }
+                for (let y = 1; y < h - 1; y++) {
+                    queue.push(0, y);
+                    queue.push(w - 1, y);
+                }
+
+                function colorDist(idx) {
+                    const dr = data[idx] - bgR;
+                    const dg = data[idx + 1] - bgG;
+                    const db = data[idx + 2] - bgB;
+                    return Math.sqrt(dr * dr + dg * dg + db * db);
+                }
+
+                // BFS
+                let qi = 0;
+                while (qi < queue.length) {
+                    const x = queue[qi++];
+                    const y = queue[qi++];
+                    if (x < 0 || x >= w || y < 0 || y >= h) continue;
+                    const pos = y * w + x;
+                    if (visited[pos]) continue;
+                    visited[pos] = 1;
+                    const idx = pos * 4;
+                    if (colorDist(idx) <= tolerance) {
+                        isBackground[pos] = 1;
+                        queue.push(x - 1, y, x + 1, y, x, y - 1, x, y + 1);
+                    }
+                }
+
+                // 第四步：羽化边缘（对边界像素做半透明过渡）
+                const featherRadius = 2;
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const pos = y * w + x;
+                        const idx = pos * 4;
+                        if (isBackground[pos]) {
+                            data[idx + 3] = 0; // 完全透明
+                        } else {
+                            // 检查周边是否有背景像素，做羽化
+                            let nearBg = 0;
+                            for (let dy = -featherRadius; dy <= featherRadius; dy++) {
+                                for (let dx = -featherRadius; dx <= featherRadius; dx++) {
+                                    const nx = x + dx, ny = y + dy;
+                                    if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                                        if (isBackground[ny * w + nx]) nearBg++;
+                                    }
+                                }
+                            }
+                            const total = (featherRadius * 2 + 1) * (featherRadius * 2 + 1);
+                            if (nearBg > 0) {
+                                data[idx + 3] = Math.round(data[idx + 3] * (1 - nearBg / total * 0.7));
+                            }
+                        }
+                    }
+                }
+
+                offCtx.putImageData(imageData, 0, 0);
+
+                // 将处理结果作为新的 currentImage
+                const resultImg = new Image();
+                resultImg.onload = () => {
+                    currentImage = resultImg;
                     renderCanvas();
                     hideLoading();
                 };
-                img.src = url;
+                resultImg.src = offscreen.toDataURL('image/png');
+
             } catch (error) {
-                console.error('抠图失败:', error);
+                console.error('去背景失败:', error);
                 hideLoading();
-                alert('AI 抠图失败，请检查网络连接后重试');
+                alert('去背景处理失败：' + error.message);
             }
         }
 
@@ -1116,67 +1225,94 @@
             });
         }
 
-        // 生成 GIF
-        function generateGif() {
+        // 生成 GIF（内联 Worker，无跨域问题）
+        async function generateGif() {
             if (gifFrames.length < 2) {
                 alert('请至少上传 2 张图片来制作 GIF');
                 return;
             }
-            
+
             showLoading('生成 GIF 中，请稍候...');
-            
-            const gif = new GIF({
-                workers: 2,
-                quality: 10,
-                width: canvas.width,
-                height: canvas.height,
-                workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'
-            });
-            
-            const delay = parseInt(document.getElementById('gifDelay').value);
-            
-            gifFrames.forEach((frame, index) => {
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = canvas.width;
-                tempCanvas.height = canvas.height;
-                const tempCtx = tempCanvas.getContext('2d');
-                
-                tempCtx.fillStyle = '#ffffff';
-                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-                
-                const scale = Math.min(
-                    tempCanvas.width / frame.width * 0.9,
-                    tempCanvas.height / frame.height * 0.9
-                );
-                const width = frame.width * scale;
-                const height = frame.height * scale;
-                
-                tempCtx.drawImage(frame, 
-                    (tempCanvas.width - width) / 2, 
-                    (tempCanvas.height - height) / 2, 
-                    width, height
-                );
-                
-                gif.addFrame(tempCanvas, {delay: delay});
-            });
-            
-            gif.on('progress', (p) => {
-                document.getElementById('gifProgress').style.width = `${p * 100}%`;
-            });
-            
-            gif.on('finished', (blob) => {
+            document.getElementById('gifProgress').style.width = '0%';
+
+            try {
+                // 动态加载 gif.js（仅在需要时加载）
+                if (typeof GIF === 'undefined') {
+                    await new Promise((resolve, reject) => {
+                        const s = document.createElement('script');
+                        s.src = 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js';
+                        s.onload = resolve;
+                        s.onerror = reject;
+                        document.head.appendChild(s);
+                    });
+                }
+
+                // 获取 gif.worker.js 源码并转成 Blob URL，彻底绕开跨域限制
+                const workerResp = await fetch('https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js');
+                const workerText = await workerResp.text();
+                const workerBlob = new Blob([workerText], { type: 'application/javascript' });
+                const workerUrl = URL.createObjectURL(workerBlob);
+
+                const delay = parseInt(document.getElementById('gifDelay').value) || 500;
+
+                const gif = new GIF({
+                    workers: 2,
+                    quality: 10,
+                    width: canvas.width,
+                    height: canvas.height,
+                    workerScript: workerUrl
+                });
+
+                gifFrames.forEach((frame) => {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = canvas.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.fillStyle = '#ffffff';
+                    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                    const scale = Math.min(
+                        tempCanvas.width / frame.width * 0.9,
+                        tempCanvas.height / frame.height * 0.9
+                    );
+                    const fw = frame.width * scale;
+                    const fh = frame.height * scale;
+                    tempCtx.drawImage(frame,
+                        (tempCanvas.width - fw) / 2,
+                        (tempCanvas.height - fh) / 2,
+                        fw, fh
+                    );
+                    gif.addFrame(tempCanvas, { delay });
+                });
+
+                gif.on('progress', (p) => {
+                    document.getElementById('gifProgress').style.width = `${Math.round(p * 100)}%`;
+                });
+
+                gif.on('finished', (blob) => {
+                    URL.revokeObjectURL(workerUrl);
+                    hideLoading();
+                    document.getElementById('gifProgress').style.width = '0%';
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `sticker-${Date.now()}.gif`;
+                    a.click();
+                    setTimeout(() => URL.revokeObjectURL(url), 5000);
+                });
+
+                gif.on('error', (err) => {
+                    URL.revokeObjectURL(workerUrl);
+                    hideLoading();
+                    alert('GIF 生成失败：' + err);
+                });
+
+                gif.render();
+
+            } catch (err) {
                 hideLoading();
-                document.getElementById('gifProgress').style.width = '0%';
-                
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `sticker-${Date.now()}.gif`;
-                a.click();
-                URL.revokeObjectURL(url);
-            });
-            
-            gif.render();
+                console.error('GIF 生成失败:', err);
+                alert('GIF 生成失败，请检查网络连接后重试');
+            }
         }
 
         // 下载图片
