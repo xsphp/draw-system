@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 编辑器 - 许先生的工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .toolbar {
+            background: white;
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .toolbar-btn {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .toolbar-btn:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 200px);
+            min-height: 500px;
+        }
+
+        .editor-panel, .preview-panel {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .panel-header {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-bottom: 2px solid #ddd;
+            font-weight: 600;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #editor {
+            width: 100%;
+            height: calc(100% - 45px);
+            border: none;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+        }
+
+        #editor:focus {
+            outline: none;
+        }
+
+        #preview {
+            width: 100%;
+            height: calc(100% - 45px);
+            padding: 15px;
+            overflow-y: auto;
+            line-height: 1.8;
+        }
+
+        #preview h1, #preview h2, #preview h3 {
+            margin: 1em 0 0.5em;
+            color: #333;
+        }
+
+        #preview h1 { font-size: 2em; border-bottom: 2px solid #667eea; padding-bottom: 0.3em; }
+        #preview h2 { font-size: 1.5em; border-bottom: 1px solid #ddd; padding-bottom: 0.3em; }
+        #preview h3 { font-size: 1.25em; }
+
+        #preview p { margin: 1em 0; }
+
+        #preview code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        #preview pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+
+        #preview pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        #preview blockquote {
+            border-left: 4px solid #667eea;
+            margin: 1em 0;
+            padding: 0.5em 1em;
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        #preview ul, #preview ol {
+            margin: 1em 0;
+            padding-left: 2em;
+        }
+
+        #preview table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+
+        #preview th, #preview td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        #preview th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        #preview img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        #preview a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        #preview a:hover {
+            text-decoration: underline;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .word-count {
+            color: #666;
+            font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .editor-panel, .preview-panel {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="../../index.html" class="back-btn">← 返回工具箱</a>
+            <h1>📝 Markdown 编辑器</h1>
+            <p>实时预览，支持导出 HTML/PDF</p>
+        </div>
+
+        <div class="toolbar">
+            <button class="toolbar-btn" onclick="insertText('# ', '标题 1')" title="标题 1">H1</button>
+            <button class="toolbar-btn" onclick="insertText('## ', '标题 2')" title="标题 2">H2</button>
+            <button class="toolbar-btn" onclick="insertText('### ', '标题 3')" title="标题 3">H3</button>
+            <button class="toolbar-btn" onclick="insertText('**', '**', '粗体')" title="粗体"><b>B</b></button>
+            <button class="toolbar-btn" onclick="insertText('*', '*', '斜体')" title="斜体"><i>I</i></button>
+            <button class="toolbar-btn" onclick="insertText('[', '](url)', '链接文字')" title="链接">🔗</button>
+            <button class="toolbar-btn" onclick="insertText('![', '](url)', '图片描述')" title="图片">🖼️</button>
+            <button class="toolbar-btn" onclick="insertText('- ', '', '列表项')" title="列表">📋</button>
+            <button class="toolbar-btn" onclick="insertText('> ', '', '引用内容')" title="引用">❝</button>
+            <button class="toolbar-btn" onclick="insertText('```', '```\n代码', 'language')" title="代码块">&lt;/&gt;</button>
+            <button class="toolbar-btn" onclick="insertText('| ', ' |  |', '表头')" title="表格">📊</button>
+            
+            <div style="flex: 1;"></div>
+            
+            <button class="btn btn-primary" onclick="copyHtml()">📋 复制 HTML</button>
+            <button class="btn btn-success" onclick="downloadHtml()">💾 导出 HTML</button>
+        </div>
+
+        <div class="editor-container">
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <span>✏️ 编辑</span>
+                    <span class="word-count" id="wordCount">0 字</span>
+                </div>
+                <textarea id="editor" placeholder="开始输入 Markdown 内容..."></textarea>
+            </div>
+
+            <div class="preview-panel">
+                <div class="panel-header">
+                    <span>👁️ 预览</span>
+                </div>
+                <div id="preview"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <script>
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+        const wordCount = document.getElementById('wordCount');
+
+        // 默认内容
+        const defaultContent = `# 欢迎使用 Markdown 编辑器
+
+## 快速开始
+
+这是一个**实时预览**的 Markdown 编辑器，支持以下功能：
+
+### 基础语法
+
+- **粗体文字**
+- *斜体文字*
+- [链接](https://example.com)
+- ![图片](https://via.placeholder.com/400x200)
+
+### 代码块
+
+\`\`\`javascript
+function hello() {
+    console.log('Hello World!');
+}
+\`\`\`
+
+### 表格
+
+| 姓名 | 年龄 | 城市 |
+|------|------|------|
+| 张三 | 25 | 北京 |
+| 李四 | 30 | 上海 |
+
+### 引用
+
+> 这是一段引用文字
+> 支持多行
+
+---
+
+**开始编辑吧！** ✨
+`;
+
+        editor.value = defaultContent;
+
+        // 实时预览
+        editor.addEventListener('input', () => {
+            const markdown = editor.value;
+            preview.innerHTML = marked.parse(markdown);
+            updateWordCount();
+            saveToLocal();
+        });
+
+        // 初始化
+        preview.innerHTML = marked.parse(editor.value);
+        updateWordCount();
+
+        function insertText(before, after = '', placeholder = '') {
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            const selectedText = text.substring(start, end) || placeholder;
+            
+            editor.value = text.substring(0, start) + before + selectedText + after + text.substring(end);
+            editor.focus();
+            editor.selectionStart = start + before.length;
+            editor.selectionEnd = start + before.length + selectedText.length;
+            
+            preview.innerHTML = marked.parse(editor.value);
+            updateWordCount();
+            saveToLocal();
+        }
+
+        function updateWordCount() {
+            const text = editor.value;
+            const count = text.length;
+            wordCount.textContent = count + ' 字';
+        }
+
+        function copyHtml() {
+            const html = preview.innerHTML;
+            navigator.clipboard.writeText(html).then(() => {
+                alert('✅ HTML 已复制到剪贴板');
+            }).catch(err => {
+                alert('❌ 复制失败：' + err);
+            });
+        }
+
+        function downloadHtml() {
+            const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown 文档</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.8; }
+        h1, h2, h3 { margin: 1em 0 0.5em; color: #333; }
+        h1 { font-size: 2em; border-bottom: 2px solid #667eea; padding-bottom: 0.3em; }
+        h2 { font-size: 1.5em; border-bottom: 1px solid #ddd; padding-bottom: 0.3em; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-family: Consolas, Monaco, monospace; }
+        pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        blockquote { border-left: 4px solid #667eea; margin: 1em 0; padding: 0.5em 1em; background: #f8f9fa; }
+        table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+        th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+        th { background: #f8f9fa; }
+        img { max-width: 100%; }
+        a { color: #667eea; }
+    </style>
+</head>
+<body>
+${preview.innerHTML}
+</body>
+</html>`;
+
+            const blob = new Blob([html], {type: 'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `document_${Date.now()}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function saveToLocal() {
+            localStorage.setItem('markdown_content', editor.value);
+        }
+
+        function loadFromLocal() {
+            const saved = localStorage.getItem('markdown_content');
+            if (saved) {
+                editor.value = saved;
+                preview.innerHTML = marked.parse(saved);
+                updateWordCount();
+            }
+        }
+
+        // 加载保存的内容
+        loadFromLocal();
+
+        // 快捷键
+        editor.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 's') {
+                    e.preventDefault();
+                    saveToLocal();
+                    alert('✅ 已保存');
+                }
+                if (e.key === 'b') {
+                    e.preventDefault();
+                    insertText('**', '**');
+                }
+                if (e.key === 'i') {
+                    e.preventDefault();
+                    insertText('*', '*');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

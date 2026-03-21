@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九宫格切图工具 - 许先生的工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .upload-area:hover {
+            background: #f0f0ff;
+            border-color: #764ba2;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        .controls {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .controls.active {
+            display: block;
+        }
+
+        .grid-selector {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .grid-btn {
+            padding: 15px 30px;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .grid-btn:hover {
+            border-color: #667eea;
+        }
+
+        .grid-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .grid-item {
+            aspect-ratio: 1;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            background: #f8f9fa;
+        }
+
+        .grid-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .grid-item .number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .grid-item .download-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .grid-item:hover .download-btn {
+            opacity: 1;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tips {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+        }
+
+        /* 📱 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 1.8em; }
+            .header p { font-size: 0.95em; }
+            .main-content { padding: 15px; }
+            .upload-area { padding: 40px 15px; }
+            .upload-icon { font-size: 3em; }
+            .btn { padding: 12px 20px; font-size: 14px; }
+            .btn-block { padding: 14px; }
+            .control-group input, .control-group select, .control-group textarea { font-size: 16px; padding: 12px; }
+            .preview-container, .preview-grid { grid-template-columns: 1fr !important; }
+            .stats { grid-template-columns: 1fr 1fr; }
+            .format-selector, .grid-selector, .type-selector { flex-wrap: wrap; }
+            .format-btn, .grid-btn, .type-btn { padding: 12px 20px; font-size: 14px; }
+        }
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1.5em; }
+            .upload-area { padding: 30px 10px; }
+            .btn { padding: 10px 16px; font-size: 13px; }
+            .stats { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="../../index.html" class="back-btn">← 返回工具箱</a>
+            <h1>✂️ 九宫格切图工具</h1>
+            <p>一键切图发朋友圈/小红书/微博</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📁</div>
+                <h3>点击或拖拽上传图片</h3>
+                <p style="color: #666; margin-top: 10px;">支持 JPG、PNG、WebP 格式</p>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFile(event)">
+
+            <div class="controls" id="controls">
+                <div class="tips">
+                    💡 <strong>使用提示：</strong>选择切图数量后，图片会自动分割，点击下载按钮保存单张，或打包下载全部
+                </div>
+
+                <h3 style="text-align: center; margin: 20px 0;">选择切图数量</h3>
+                <div class="grid-selector">
+                    <button class="grid-btn active" onclick="selectGrid(3, this)">3×3 (9 张)</button>
+                    <button class="grid-btn" onclick="selectGrid(2, this)">2×2 (4 张)</button>
+                    <button class="grid-btn" onclick="selectGrid(4, this)">4×4 (16 张)</button>
+                    <button class="grid-btn" onclick="selectGrid(6, this)">6×6 (36 张)</button>
+                </div>
+
+                <div class="preview-grid" id="previewGrid"></div>
+
+                <button class="btn btn-success btn-block" onclick="downloadAll()" style="margin-top: 20px;">📦 打包下载全部</button>
+                <button class="btn btn-secondary btn-block" onclick="resetAll()">🔄 重新选择</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loadingText">切图中...</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        let originalImage = null;
+        let gridSize = 3;
+        let cutImages = [];
+
+        function selectGrid(size, btn) {
+            gridSize = size;
+            document.querySelectorAll('.grid-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            if (originalImage) {
+                cutImage();
+            }
+        }
+
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage = new Image();
+                originalImage.onload = () => {
+                    document.getElementById('controls').classList.add('active');
+                    cutImage();
+                };
+                originalImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cutImage() {
+            showLoading('正在切图...');
+            cutImages = [];
+            const grid = document.getElementById('previewGrid');
+            grid.innerHTML = '';
+
+            const pieceWidth = Math.floor(originalImage.width / gridSize);
+            const pieceHeight = Math.floor(originalImage.height / gridSize);
+
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = pieceWidth;
+                    canvas.height = pieceHeight;
+                    const ctx = canvas.getContext('2d');
+
+                    ctx.drawImage(
+                        originalImage,
+                        col * pieceWidth, row * pieceHeight,
+                        pieceWidth, pieceHeight,
+                        0, 0,
+                        pieceWidth, pieceHeight
+                    );
+
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+                    cutImages.push(dataUrl);
+
+                    const item = document.createElement('div');
+                    item.className = 'grid-item';
+                    item.innerHTML = `
+                        <img src="${dataUrl}" alt="切图${row * gridSize + col + 1}">
+                        <div class="number">${row * gridSize + col + 1}</div>
+                        <div class="download-btn" onclick="downloadSingle(${row * gridSize + col})">⬇️</div>
+                    `;
+                    grid.appendChild(item);
+                }
+            }
+
+            hideLoading();
+        }
+
+        function downloadSingle(index) {
+            const a = document.createElement('a');
+            a.href = cutImages[index];
+            a.download = `grid_${index + 1}.jpg`;
+            a.click();
+        }
+
+        function downloadAll() {
+            if (cutImages.length === 0) {
+                alert('没有可下载的图片');
+                return;
+            }
+
+            showLoading('正在打包...');
+            const zip = new JSZip();
+            
+            cutImages.forEach((imgData, i) => {
+                const base64Data = imgData.replace(/^data:image\/(png|jpg|jpeg);base64,/, '');
+                zip.file(`grid_${i + 1}.jpg`, base64Data, {base64: true});
+            });
+
+            zip.generateAsync({type: 'blob'}).then((content) => {
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `nine_grid_${Date.now()}.zip`;
+                a.click();
+                URL.revokeObjectURL(url);
+                hideLoading();
+            });
+        }
+
+        function resetAll() {
+            originalImage = null;
+            cutImages = [];
+            document.getElementById('fileInput').value = '';
+            document.getElementById('controls').classList.remove('active');
+            document.getElementById('previewGrid').innerHTML = '';
+        }
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loading').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        // 拖拽上传
+        const uploadArea = document.querySelector('.upload-area');
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = '#f0f0ff';
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.background = '#f8f9fa';
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = '#f8f9fa';
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    originalImage = new Image();
+                    originalImage.onload = () => {
+                        document.getElementById('controls').classList.add('active');
+                        cutImage();
+                    };
+                    originalImage.src = ev.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>
