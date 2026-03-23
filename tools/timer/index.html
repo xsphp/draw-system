@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多功能计时器 - 许先生的工具箱</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <style>
+        .timer-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .timer-display {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .timer-time {
+            font-size: 4rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .timer-status {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd6;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .lap-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .lap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .lap-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .lap-count {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .lap-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .lap-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .lap-number {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 80px;
+        }
+
+        .lap-time {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .lap-total {
+            font-size: 0.9rem;
+            color: #666;
+            margin-left: 15px;
+        }
+
+        .lap-item.best {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left: 4px solid #28a745;
+        }
+
+        .lap-item.worst {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border-left: 4px solid #dc3545;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .preset-section {
+            margin-bottom: 20px;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .btn-preset {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-preset:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .export-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        @media (max-width: 600px) {
+            .timer-time {
+                font-size: 2.5rem;
+            }
+            
+            .timer-controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <header class="header">
+            <div class="container">
+                <a href="../../index.html" class="back-link">← 返回工具箱</a>
+                <h1 class="site-title">⏱️ 多功能计时器</h1>
+                <p class="site-slogan">多次计时，记录每次结果</p>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="container">
+                <div class="timer-container">
+                    <!-- 预设时间 -->
+                    <div class="preset-section">
+                        <label style="font-weight: 500; color: #333;">快速预设：</label>
+                        <div class="preset-buttons">
+                            <button class="btn-preset" onclick="setPreset(1)">1 分钟</button>
+                            <button class="btn-preset" onclick="setPreset(5)">5 分钟</button>
+                            <button class="btn-preset" onclick="setPreset(10)">10 分钟</button>
+                            <button class="btn-preset" onclick="setPreset(15)">15 分钟</button>
+                            <button class="btn-preset" onclick="setPreset(25)">25 分钟</button>
+                            <button class="btn-preset" onclick="setPreset(45)">45 分钟</button>
+                            <button class="btn-preset" onclick="setPreset(60)">60 分钟</button>
+                        </div>
+                    </div>
+
+                    <!-- 计时器显示 -->
+                    <div class="timer-display">
+                        <div class="timer-time" id="timerDisplay">00:00:00</div>
+                        <div class="timer-status" id="timerStatus">准备就绪</div>
+                    </div>
+
+                    <!-- 控制按钮 -->
+                    <div class="timer-controls">
+                        <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">▶ 开始</button>
+                        <button class="btn btn-success" id="lapBtn" onclick="recordLap()" disabled>📍 记录圈数</button>
+                        <button class="btn btn-secondary" onclick="resetTimer()">🔄 重置</button>
+                        <button class="btn btn-danger" onclick="clearLaps()" disabled id="clearBtn">🗑️ 清除记录</button>
+                    </div>
+
+                    <!-- 记录列表 -->
+                    <div class="lap-section">
+                        <div class="lap-header">
+                            <h3>📋 计时记录</h3>
+                            <span class="lap-count" id="lapCount">0 次</span>
+                        </div>
+                        
+                        <div id="emptyState" class="empty-state">
+                            <div class="empty-state-icon">⏱️</div>
+                            <p>点击"记录圈数"开始记录</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px;">每次点击会记录当前时间并重新开始计时</p>
+                        </div>
+
+                        <ul class="lap-list" id="lapList"></ul>
+
+                        <div class="export-section">
+                            <button class="btn btn-secondary" onclick="exportResults()" style="width: 100%;">📤 导出记录</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2026 许先生的工具箱 · Powered by GitHub Pages</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        let timerInterval = null;
+        let startTime = 0;
+        let elapsedTime = 0;
+        let isRunning = false;
+        let laps = [];
+        let lapStartTime = 0;
+
+        // 格式化时间
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            const milliseconds = Math.floor((ms % 1000) / 10);
+
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(2, '0')}`;
+        }
+
+        // 更新显示
+        function updateDisplay() {
+            const now = Date.now();
+            const elapsed = isRunning ? elapsedTime + (now - startTime) : elapsedTime;
+            document.getElementById('timerDisplay').textContent = formatTime(elapsed);
+            return elapsed;
+        }
+
+        // 切换计时器
+        function toggleTimer() {
+            const startBtn = document.getElementById('startBtn');
+            const lapBtn = document.getElementById('lapBtn');
+            const statusEl = document.getElementById('timerStatus');
+
+            if (isRunning) {
+                // 暂停
+                clearInterval(timerInterval);
+                elapsedTime += Date.now() - startTime;
+                isRunning = false;
+                startBtn.textContent = '▶ 继续';
+                startBtn.classList.remove('btn-danger');
+                startBtn.classList.add('btn-primary');
+                lapBtn.disabled = true;
+                statusEl.textContent = '已暂停';
+            } else {
+                // 开始
+                startTime = Date.now();
+                lapStartTime = Date.now();
+                isRunning = true;
+                timerInterval = setInterval(updateDisplay, 10);
+                startBtn.textContent = '⏸ 暂停';
+                startBtn.classList.remove('btn-primary');
+                startBtn.classList.add('btn-danger');
+                lapBtn.disabled = false;
+                statusEl.textContent = '计时中...';
+            }
+        }
+
+        // 重置计时器
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            elapsedTime = 0;
+            startTime = 0;
+            document.getElementById('timerDisplay').textContent = '00:00:00';
+            document.getElementById('timerStatus').textContent = '准备就绪';
+            document.getElementById('startBtn').textContent = '▶ 开始';
+            document.getElementById('startBtn').classList.remove('btn-danger');
+            document.getElementById('startBtn').classList.add('btn-primary');
+            document.getElementById('lapBtn').disabled = true;
+        }
+
+        // 记录圈数
+        function recordLap() {
+            // 获取当前准确时间
+            const now = Date.now();
+            const currentTime = isRunning ? elapsedTime + (now - startTime) : elapsedTime;
+            
+            const lap = {
+                number: laps.length + 1,  // 第几次记录
+                totalTime: currentTime,    // 当前总时间
+                timestamp: new Date().toLocaleTimeString()
+            };
+            
+            laps.push(lap);
+            renderLaps();
+            
+            // 播放提示音（可选）
+            playBeep();
+        }
+
+        // 播放提示音
+        function playBeep() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (e) {
+                // 浏览器不支持音频，忽略
+            }
+        }
+
+        // 渲染记录列表
+        function renderLaps() {
+            const lapList = document.getElementById('lapList');
+            const emptyState = document.getElementById('emptyState');
+            const lapCount = document.getElementById('lapCount');
+            const clearBtn = document.getElementById('clearBtn');
+
+            lapCount.textContent = `${laps.length} 次`;
+            clearBtn.disabled = laps.length === 0;
+
+            if (laps.length === 0) {
+                emptyState.style.display = 'block';
+                lapList.style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            lapList.style.display = 'block';
+
+            lapList.innerHTML = laps.map(lap => {
+                return `
+                    <li class="lap-item">
+                        <span class="lap-number">记录 ${lap.number}</span>
+                        <div>
+                            <span class="lap-time">${formatTime(lap.totalTime)}</span>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+
+            // 滚动到底部
+            lapList.scrollTop = lapList.scrollHeight;
+        }
+
+        // 清除记录
+        function clearLaps() {
+            if (confirm('确定要清除所有记录吗？')) {
+                laps = [];
+                renderLaps();
+                resetTimer();
+            }
+        }
+
+        // 设置预设时间
+        function setPreset(minutes) {
+            resetTimer();
+            elapsedTime = minutes * 60 * 1000;
+            updateDisplay();
+            document.getElementById('timerStatus').textContent = `已设置 ${minutes} 分钟`;
+        }
+
+        // 导出记录
+        function exportResults() {
+            if (laps.length === 0) {
+                alert('暂无记录可导出');
+                return;
+            }
+
+            let text = '⏱️ 计时器记录\n';
+            text += '='.repeat(40) + '\n';
+            text += `导出时间：${new Date().toLocaleString()}\n`;
+            text += `记录次数：${laps.length}\n\n`;
+
+            laps.forEach(lap => {
+                text += `记录 ${lap.number}: ${formatTime(lap.totalTime)} (${lap.timestamp})\n`;
+            });
+
+            text += '\n' + '='.repeat(40) + '\n';
+            text += `最后一次：${formatTime(laps[laps.length - 1].totalTime)}\n`;
+
+            // 复制到剪贴板
+            navigator.clipboard.writeText(text).then(() => {
+                alert('记录已复制到剪贴板！\n\n' + text);
+            }).catch(() => {
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('记录已复制到剪贴板！');
+            });
+        }
+
+        // 页面关闭前提醒
+        window.addEventListener('beforeunload', (e) => {
+            if (isRunning || laps.length > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>
