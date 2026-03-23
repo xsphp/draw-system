@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金额大写转换工具 - 许先生的工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-prefix {
+            position: absolute;
+            left: 15px;
+            color: #666;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px 15px 15px 35px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.3em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 25px;
+            min-height: 120px;
+        }
+
+        .result-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-size: 1.4em;
+            line-height: 1.6;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .tips {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 25px;
+            color: #856404;
+        }
+
+        .tips-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .tips ul {
+            margin-left: 20px;
+            font-size: 0.95em;
+        }
+
+        .tips li {
+            margin: 5px 0;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* 📱 移动端适配 */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header h1 { font-size: 1.8em; }
+            .main-content { padding: 20px; }
+            .input-group input { font-size: 1.1em; padding: 12px 12px 12px 30px; }
+            .result-value { font-size: 1.2em; }
+            .btn-group { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 { font-size: 1.5em; }
+            .btn-group { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="../../index.html" class="back-btn">← 返回工具箱</a>
+            <h1>💰 金额大写转换</h1>
+            <p>阿拉伯数字转中文大写金额，财务报销必备</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-group">
+                <label>输入金额（元）</label>
+                <div class="input-wrapper">
+                    <span class="input-prefix">¥</span>
+                    <input type="number" id="amountInput" placeholder="12345.67" step="0.01" min="0" max="999999999999.99" oninput="convertAmount()">
+                </div>
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <div class="result-box">
+                <div class="result-label">📝 大写金额</div>
+                <div class="result-value" id="resultValue">请输入金额</div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="copyResult()">📋 复制结果</button>
+                <button class="btn btn-success" onclick="fillExample(12345.67)">💡 示例：12345.67</button>
+                <button class="btn btn-success" onclick="fillExample(9876543.21)">💡 示例：9876543.21</button>
+                <button class="btn btn-secondary" onclick="clearAll()">🔄 清空</button>
+            </div>
+
+            <div class="tips">
+                <div class="tips-title">💡 大写金额规则</div>
+                <ul>
+                    <li>数字：零、壹、贰、叁、肆、伍、陆、柒、捌、玖</li>
+                    <li>单位：拾、佰、仟、万、亿</li>
+                    <li>货币：人民币、元、角、分、整</li>
+                    <li>连续多个 0 只读一个"零"</li>
+                    <li>万位、亿位是 0 时也要读"零"</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const digits = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+        const units = ['', '拾', '佰', '仟'];
+        const bigUnits = ['', '万', '亿', '兆'];
+
+        function convertAmount() {
+            const input = document.getElementById('amountInput').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const resultDiv = document.getElementById('resultValue');
+
+            if (!input) {
+                resultDiv.textContent = '请输入金额';
+                errorDiv.classList.remove('show');
+                return;
+            }
+
+            const amount = parseFloat(input);
+            
+            if (isNaN(amount)) {
+                errorDiv.textContent = '❌ 请输入有效的数字';
+                errorDiv.classList.add('show');
+                resultDiv.textContent = '无效输入';
+                return;
+            }
+
+            if (amount < 0) {
+                errorDiv.textContent = '❌ 金额不能为负数';
+                errorDiv.classList.add('show');
+                resultDiv.textContent = '无效输入';
+                return;
+            }
+
+            if (amount > 999999999999.99) {
+                errorDiv.textContent = '❌ 金额超出范围（最大 9999 亿）';
+                errorDiv.classList.add('show');
+                resultDiv.textContent = '超出范围';
+                return;
+            }
+
+            errorDiv.classList.remove('show');
+
+            // 分离整数和小数部分
+            const yuan = Math.floor(amount);
+            const fen = Math.round((amount - yuan) * 100);
+            const jiao = Math.floor((amount - yuan) * 10);
+
+            let result = '人民币';
+
+            // 转换整数部分
+            if (yuan === 0) {
+                result += '零元';
+            } else {
+                result += convertInteger(yuan) + '元';
+            }
+
+            // 转换小数部分
+            if (fen === 0) {
+                result += '整';
+            } else {
+                if (jiao === 0) {
+                    result += '零' + digits[fen % 10] + '分';
+                } else if (fen % 10 === 0) {
+                    result += digits[jiao] + '角';
+                } else {
+                    result += digits[jiao] + '角' + digits[fen % 10] + '分';
+                }
+            }
+
+            resultDiv.textContent = result;
+        }
+
+        function convertInteger(num) {
+            if (num === 0) return '零';
+
+            let result = '';
+            let zeroFlag = false;
+            let unitPos = 0;
+
+            while (num > 0) {
+                const section = num % 10000;
+                if (section !== 0) {
+                    const sectionStr = convertSection(section);
+                    if (zeroFlag) {
+                        result = '零' + sectionStr + bigUnits[unitPos] + result;
+                        zeroFlag = false;
+                    } else {
+                        result = sectionStr + bigUnits[unitPos] + result;
+                    }
+                } else {
+                    if (!zeroFlag && result !== '') {
+                        zeroFlag = true;
+                    }
+                }
+                num = Math.floor(num / 10000);
+                unitPos++;
+            }
+
+            return result;
+        }
+
+        function convertSection(num) {
+            let result = '';
+            let zeroFlag = true;
+            let unitPos = 0;
+
+            while (num > 0) {
+                const digit = num % 10;
+                if (digit !== 0) {
+                    if (zeroFlag) {
+                        result = digits[digit] + units[unitPos] + result;
+                        zeroFlag = false;
+                    } else {
+                        result = digits[digit] + units[unitPos] + result;
+                    }
+                } else {
+                    if (!zeroFlag) {
+                        result = '零' + result;
+                        zeroFlag = true;
+                    }
+                }
+                num = Math.floor(num / 10);
+                unitPos++;
+            }
+
+            // 去掉末尾的零
+            if (result.endsWith('零')) {
+                result = result.slice(0, -1);
+            }
+
+            return result;
+        }
+
+        function copyResult() {
+            const text = document.getElementById('resultValue').textContent;
+            if (text === '请输入金额' || text === '无效输入' || text === '超出范围') {
+                alert('请先输入有效的金额');
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ 已复制到剪贴板');
+            }).catch(err => {
+                alert('复制失败：' + err);
+            });
+        }
+
+        function fillExample(amount) {
+            document.getElementById('amountInput').value = amount;
+            convertAmount();
+        }
+
+        function clearAll() {
+            document.getElementById('amountInput').value = '';
+            document.getElementById('resultValue').textContent = '请输入金额';
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.8);
+                color: white;
+                padding: 20px 30px;
+                border-radius: 10px;
+                font-size: 1.1em;
+                z-index: 1000;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        // 初始化
+        convertAmount();
+    </script>
+</body>
+</html>
